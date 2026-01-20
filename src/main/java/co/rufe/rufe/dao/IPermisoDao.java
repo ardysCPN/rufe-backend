@@ -6,10 +6,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IPermisoDao {
-    Optional<Permiso> findById(Long id);
-    Optional<Permiso> findByNombrePermiso(String nombrePermiso);
-    List<Permiso> findAll();
-    List<Permiso> findByRolId(Long rolId); // Método clave para la autenticación
+
     Permiso save(Permiso permiso);
-    void delete(Long id);
+    Optional<Permiso> findById(Integer id);
+    List<Permiso> findAll();
+    Optional<Permiso> findByNombrePermiso(String nombrePermiso); // Para buscar por el nombre único del permiso
+    boolean existsByNombrePermiso(String nombrePermiso);
+    boolean existsById(Integer id);
+    Permiso update(Permiso permiso);
+    boolean deleteById(Integer id);
+    List<Permiso> findAllById(List<Integer> ids); // Para obtener múltiples permisos por sus IDs
+    List<Permiso> findByRolId(Long id);
 }

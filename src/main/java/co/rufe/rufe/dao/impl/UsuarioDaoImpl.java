@@ -179,4 +179,18 @@ public class UsuarioDaoImpl implements IUsuarioDao {
             return Optional.empty();
         }
     }
+
+    @Override
+    public Optional<Usuario> findByEmailAndOrganizacionId(String email, Long organizacionId) {
+        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion " +
+                     "FROM usuarios WHERE email = :email AND organizacion_id = :organizacionId";
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("email", email);
+        params.addValue("organizacionId", organizacionId);
+        try {
+            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 }

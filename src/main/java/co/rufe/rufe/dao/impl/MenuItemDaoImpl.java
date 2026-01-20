@@ -43,13 +43,13 @@ public class MenuItemDaoImpl implements IMenuItemDao {
 
         namedParameterJdbcTemplate.update(sql, params, keyHolder, new String[]{"id"});
 
-        long newId = Objects.requireNonNull(keyHolder.getKey()).longValue();
+        Integer newId = Objects.requireNonNull(keyHolder.getKey()).intValue();
         menuItem.setId(newId);
         return menuItem;
     }
 
     @Override
-    public Optional<MenuItem> findById(Long id) {
+    public Optional<MenuItem> findById(Integer id) {
         String sql = "SELECT id, parent_id, nombre_item, ruta, icono, orden FROM menu_items WHERE id = :id";
         MapSqlParameterSource params = new MapSqlParameterSource("id", id);
         try {
@@ -66,7 +66,7 @@ public class MenuItemDaoImpl implements IMenuItemDao {
     }
 
     @Override
-    public List<MenuItem> findByParentId(Long parentId) {
+    public List<MenuItem> findByParentId(Integer parentId) {
         String sql = "SELECT id, parent_id, nombre_item, ruta, icono, orden FROM menu_items WHERE parent_id = :parentId ORDER BY orden";
         MapSqlParameterSource params = new MapSqlParameterSource("parentId", parentId);
         return namedParameterJdbcTemplate.query(sql, params, CustomRowMappers.MENU_ITEM_ROW_MAPPER);
@@ -92,14 +92,14 @@ public class MenuItemDaoImpl implements IMenuItemDao {
     }
 
     @Override
-    public boolean deleteById(Long id) {
+    public boolean deleteById(Integer id) {
         String sql = "DELETE FROM menu_items WHERE id = :id";
         MapSqlParameterSource params = new MapSqlParameterSource("id", id);
         return namedParameterJdbcTemplate.update(sql, params) > 0;
     }
 
     @Override
-    public boolean existsById(Long id) {
+    public boolean existsById(Integer id) {
         String sql = "SELECT COUNT(*) FROM menu_items WHERE id = :id";
         MapSqlParameterSource params = new MapSqlParameterSource("id", id);
         Integer count = namedParameterJdbcTemplate.queryForObject(sql, params, Integer.class);
@@ -115,7 +115,7 @@ public class MenuItemDaoImpl implements IMenuItemDao {
     }
 
     @Override
-    public List<MenuItem> findByIds(Set<Long> ids) {
+    public List<MenuItem> findByIds(Set<Integer> ids) {
         if (ids == null || ids.isEmpty()) {
             return Collections.emptyList();
         }
@@ -137,12 +137,25 @@ public class MenuItemDaoImpl implements IMenuItemDao {
     }
 
     @Override
-    public List<MenuItem> findAllById(List<Long> menuItemIds) {
+    public List<MenuItem> findAllById(List<Integer> menuItemIds) {
         if (menuItemIds == null || menuItemIds.isEmpty()) {
             return Collections.emptyList();
         }
         String sql = "SELECT id, parent_id, nombre_item, ruta, icono, orden FROM menu_items WHERE id IN (:ids) ORDER BY orden";
         MapSqlParameterSource params = new MapSqlParameterSource("ids", menuItemIds);
         return namedParameterJdbcTemplate.query(sql, params, CustomRowMappers.MENU_ITEM_ROW_MAPPER);
+    }
+
+    @Override
+    public Optional<MenuItem> findByNombreItemAndParentId(String nombreItem, Integer parentId) {
+        String sql = "SELECT id, parent_id, nombre_item, ruta, icono, orden FROM menu_items WHERE nombre_item = :nombreItem AND parent_id = :parentId";
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("nombreItem", nombreItem);
+        params.addValue("parentId", parentId, Types.BIGINT);
+        try {
+            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.MENU_ITEM_ROW_MAPPER));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
     }
 }

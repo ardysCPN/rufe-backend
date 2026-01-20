@@ -11,6 +11,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -73,17 +74,17 @@ public class MenuItemPermisoDaoImpl implements IMenuItemPermisoDao {
     }
 
     @Override
-    public boolean deleteByMenuItemId(Integer menuItemId) {
+    public void deleteByMenuItemId(Integer menuItemId) {
         String sql = "DELETE FROM menu_item_permisos WHERE menu_item_id = :menuItemId";
         MapSqlParameterSource params = new MapSqlParameterSource("menuItemId", menuItemId);
-        return namedParameterJdbcTemplate.update(sql, params) > 0;
+        namedParameterJdbcTemplate.update(sql, params);
     }
 
     @Override
-    public boolean deleteByPermisoId(Integer permisoId) {
+    public void deleteByPermisoId(Integer permisoId) {
         String sql = "DELETE FROM menu_item_permisos WHERE permiso_id = :permisoId";
         MapSqlParameterSource params = new MapSqlParameterSource("permisoId", permisoId);
-        return namedParameterJdbcTemplate.update(sql, params) > 0;
+        namedParameterJdbcTemplate.update(sql, params);
     }
 
     @Override

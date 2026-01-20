@@ -11,6 +11,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class MenuItemPermiso {
-    private Integer menuItemId; // <-- Tipo Integer para menu_item_id
-    private Integer permisoId;  // <-- Tipo Integer para permiso_id
+    private Integer menuItemId; 
+    private Integer permisoId;  
 }

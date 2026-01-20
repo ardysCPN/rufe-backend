@@ -116,4 +116,18 @@ public class RolDaoImpl implements IRolDao {
         Integer count = namedParameterJdbcTemplate.queryForObject(sql, params, Integer.class);
         return count != null && count > 0;
     }
+
+    @Override
+    public Optional<Rol> findByNombreRolAndOrganizacionId(String nombre, Long organizacionId) {
+        String sql = "SELECT id, organizacion_id, nombre_rol, descripcion, fecha_creacion " +
+                     "FROM roles WHERE nombre_rol = :nombreRol AND organizacion_id = :organizacionId";
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("nombreRol", nombre);
+        params.addValue("organizacionId", organizacionId);
+        try {
+            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.ROL_ROW_MAPPER));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
 }

@@ -26,7 +26,7 @@ public class PermisoDaoImpl implements IPermisoDao {
     }
 
     @Override
-    public Optional<Permiso> findById(Long id) {
+    public Optional<Permiso> findById(Integer id) {
         String sql = "SELECT id, nombre_permiso, descripcion, recurso FROM permisos WHERE id = :id";
         try {
             var params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource();
@@ -81,7 +81,7 @@ public class PermisoDaoImpl implements IPermisoDao {
             params.addValue("descripcion", permiso.getDescripcion());
             params.addValue("recurso", permiso.getRecurso());
             namedParameterJdbcTemplate.update(sql, params, keyHolder, new String[]{"id"});
-            permiso.setId(keyHolder.getKey() != null ? keyHolder.getKey().longValue() : null);
+            permiso.setId(keyHolder.getKey() != null ? keyHolder.getKey().intValue() : null);
         } else {
             String sql = "UPDATE permisos SET nombre_permiso = :nombrePermiso, descripcion = :descripcion, recurso = :recurso WHERE id = :id";
             var params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource();
@@ -95,10 +95,52 @@ public class PermisoDaoImpl implements IPermisoDao {
     }
 
     @Override
-    public void delete(Long id) {
-        String sql = "DELETE FROM permisos WHERE id = :id";
-        org.springframework.jdbc.core.namedparam.MapSqlParameterSource params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource();
+    public boolean existsByNombrePermiso(String nombrePermiso) {
+        String sql = "SELECT COUNT(1) FROM permisos WHERE nombre_permiso = :nombrePermiso";
+        var params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource();
+        params.addValue("nombrePermiso", nombrePermiso);
+        Integer count = namedParameterJdbcTemplate.queryForObject(sql, params, Integer.class);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public boolean existsById(Integer id) {
+        String sql = "SELECT COUNT(1) FROM permisos WHERE id = :id";
+        var params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource();
         params.addValue("id", id);
+        Integer count = namedParameterJdbcTemplate.queryForObject(sql, params, Integer.class);
+        return count != null && count > 0;
+    }
+
+    @Override
+    public Permiso update(Permiso permiso) {
+        String sql = "UPDATE permisos SET nombre_permiso = :nombrePermiso, descripcion = :descripcion, recurso = :recurso WHERE id = :id";
+        var params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource();
+        params.addValue("nombrePermiso", permiso.getNombrePermiso());
+        params.addValue("descripcion", permiso.getDescripcion());
+        params.addValue("recurso", permiso.getRecurso());
+        params.addValue("id", permiso.getId());
         namedParameterJdbcTemplate.update(sql, params);
+        return permiso;
+    }
+
+    @Override
+    public boolean deleteById(Integer id) {
+        String sql = "DELETE FROM permisos WHERE id = :id";
+        var params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource();
+        params.addValue("id", id);
+        int rowsAffected = namedParameterJdbcTemplate.update(sql, params);
+        return rowsAffected > 0;
+    }
+
+    @Override
+    public List<Permiso> findAllById(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        String sql = "SELECT id, nombre_permiso, descripcion, recurso FROM permisos WHERE id IN (:ids)";
+        var params = new org.springframework.jdbc.core.namedparam.MapSqlParameterSource();
+        params.addValue("ids", ids);
+        return namedParameterJdbcTemplate.query(sql, params, CustomRowMappers.PERMISO_ROW_MAPPER);
     }
 }

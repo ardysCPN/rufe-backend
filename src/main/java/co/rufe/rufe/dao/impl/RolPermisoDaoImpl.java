@@ -72,4 +72,5 @@ public class RolPermisoDaoImpl implements IRolPermisoDao {
         MapSqlParameterSource params = new MapSqlParameterSource("rolId", rolId);
         return namedParameterJdbcTemplate.update(sql, params) > 0;
     }
+
 }

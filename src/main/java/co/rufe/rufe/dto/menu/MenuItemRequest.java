@@ -11,7 +11,7 @@ import lombok.Data;
 public class MenuItemRequest {
 
     @Schema(description = "ID del ítem de menú padre (opcional)", example = "1")
-    private Long parentId;
+    private Integer parentId;
 
     @NotBlank(message = "El nombre del ítem de menú no puede estar vacío.")
     @Size(min = 2, max = 100, message = "El nombre del ítem debe tener entre 2 y 100 caracteres.")

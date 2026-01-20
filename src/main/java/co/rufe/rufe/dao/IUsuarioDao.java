@@ -1,5 +1,6 @@
 package co.rufe.rufe.dao;
 
+import co.rufe.rufe.model.Organizacion;
 import co.rufe.rufe.model.Usuario;
 import co.rufe.rufe.model.UsuarioWithDetails;
 
@@ -25,4 +26,5 @@ public interface IUsuarioDao {
     // Retorna Usuario con detalles de Rol y Organizacion para facilitar la construcción del JWT.
     // Esto es un ejemplo de cómo podemos llamar a una función de la BD.
     Optional<UsuarioWithDetails> findUserWithDetailsByEmailAndOrganizationName(String email, String organizacionNombre);
+    Optional<Usuario> findByEmailAndOrganizacionId(String email, Long organizacionId);
 }

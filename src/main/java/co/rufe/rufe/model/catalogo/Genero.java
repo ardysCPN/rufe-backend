@@ -1,4 +1,4 @@
-package co.rufe.rufe.dto.permiso;
+package co.rufe.rufe.model.catalogo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,12 +6,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class PermisoResponse {
+public class Genero {
     private Integer id;
-    private String nombrePermiso;
-    private String descripcion;
-    private String recurso;
+    private String nombre;
 }

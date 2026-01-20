@@ -1,23 +1,23 @@
 package co.rufe.rufe.security;
 
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException; // Importar SignatureException
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException; // Para compatibilidad con tu error
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import javax.crypto.SecretKey; // Usar javax.crypto.SecretKey
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.crypto.SecretKey; // ¡Importante! Usar javax.crypto.SecretKey
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
-import org.springframework.stereotype.Component;
-
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.UnsupportedJwtException;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
+import java.util.stream.Collectors;
+import java.util.Collection; // Importar Collection
 
 @Component
 @Slf4j
@@ -36,66 +36,103 @@ public class JwtTokenProvider {
     }
 
     // Genera el token JWT
-    public String generateToken(Long organizacionId, Long userId, String rolName, String email) {
+    // Modificado para aceptar Authentication y Collection<GrantedAuthority>
+    public String generateToken(Authentication authentication, Collection<? extends GrantedAuthority> authorities) {
+        String email = authentication.getName(); // El subject es el email
+
+        // Convertir las autoridades a una cadena separada por comas
+        String authoritiesString = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
+
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + jwtExpirationMs);
 
-        // Claims personalizados para incluir en el JWT
+        // Claims personalizados (opcional, si quieres mantener userId, organizacionId, etc. explícitos)
+        // Puedes obtener estos del UserDetails si tu CustomUserDetailsService devuelve un UserDetails personalizado
+        // que contenga estos campos. Por simplicidad, solo incluimos las "authorities" como una claim.
         Map<String, Object> claims = new HashMap<>();
-        claims.put("organizacionId", organizacionId);
-        claims.put("userId", userId);
-        claims.put("rol", rolName);
-        claims.put("email", email);
+        claims.put("authorities", authoritiesString);
 
         return Jwts.builder()
-                .setClaims(claims) // Añade todos los claims personalizados
-                .setSubject(email) // El "subject" del token
-                .issuedAt(currentDate) // Fecha de emisión
-                .expiration(expireDate) // Fecha de expiración
-                .signWith(getSigningKey()) // Firma el token
-                .compact(); // Construye y compacta el JWT
+                .subject(email)
+                .claim("authorities", claims) // Añade los claims, incluyendo las autoridades
+                .issuedAt(currentDate)
+                .expiration(expireDate)
+                .signWith(getSigningKey())
+                .compact();
     }
 
     // Obtiene el email (subject) del JWT
     public String getEmailFromJwt(String token) {
-        Claims claims = Jwts.parser() // Inicia el parser
-                .verifyWith(getSigningKey()) // Verifica la firma con la clave secreta
-                .build() // Construye el parser final
-                .parseSignedClaims(token) // Parsea los claims firmados
-                .getPayload(); // Obtiene el payload (claims)
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
         return claims.getSubject();
     }
 
     // Obtiene el ID de la organización del JWT
+    // NOTA: Si el organizacionId no se guarda como un claim en generateToken,
+    // este método no podrá extraerlo. Considera añadirlo a los claims si es necesario.
     public Long getOrganizacionIdFromJwt(String token) {
-        Claims claims = Jwts.parser() // Inicia el parser
-                .verifyWith(getSigningKey()) // Verifica la firma
-                .build() // Construye el parser
-                .parseSignedClaims(token) // Parsea los claims firmados
-                .getPayload(); // Obtiene el payload (claims)
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
 
-        Object organizacionIdObj = claims.get("organizacionId");
+        Object organizacionIdObj = claims.get("organizacionId"); // Asume que "organizacionId" es un claim
         if (organizacionIdObj instanceof Number) {
             return ((Number) organizacionIdObj).longValue();
         }
-        log.error("El claim 'organizacionId' no es un número válido: {}", organizacionIdObj);
-        throw new IllegalArgumentException("Claim 'organizacionId' inválido en el token JWT.");
+        // Si no se encuentra o no es un número, podrías lanzar una excepción o devolver null
+        log.warn("Claim 'organizacionId' no encontrado o no es un número válido en el token JWT: {}", organizacionIdObj);
+        return null; // O lanza una IllegalArgumentException
+    }
+
+    // Obtiene las autoridades (roles y permisos) del JWT como una cadena
+    public String getAuthoritiesFromJwt(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return claims.get("authorities", String.class); // Recuperar la claim "authorities"
     }
 
     // Valida el token JWT
-    public boolean validateToken(String token) {
+    // Simplificado para usar la API de JJWT 0.12.x y manejar excepciones
+    public boolean validateToken(String token) { // Ya no necesita UserDetails aquí para la validación básica
         try {
-            SecretKey key = getSigningKey();
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
+            Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
             return true;
-        } catch(SecurityException | MalformedJwtException e) {
-            throw new AuthenticationCredentialsNotFoundException("JWT was expired or incorrect");
+        } catch (SignatureException e) {
+            log.error("Firma JWT inválida: {}", e.getMessage());
+            throw new AuthenticationCredentialsNotFoundException("JWT con firma inválida.");
+        } catch (MalformedJwtException e) {
+            log.error("JWT malformado: {}", e.getMessage());
+            throw new AuthenticationCredentialsNotFoundException("JWT malformado o incorrecto.");
         } catch (ExpiredJwtException e) {
-            throw new AuthenticationCredentialsNotFoundException("Expired JWT token.");
+            log.error("JWT expirado: {}", e.getMessage());
+            throw new AuthenticationCredentialsNotFoundException("JWT expirado.");
         } catch (UnsupportedJwtException e) {
-            throw new AuthenticationCredentialsNotFoundException("Unsupported JWT token.");
+            log.error("JWT no soportado: {}", e.getMessage());
+            throw new AuthenticationCredentialsNotFoundException("JWT no soportado.");
         } catch (IllegalArgumentException e) {
-            throw new AuthenticationCredentialsNotFoundException("JWT token compact of handler are invalid.");
+            log.error("La cadena JWT está vacía o es inválida: {}", e.getMessage());
+            throw new AuthenticationCredentialsNotFoundException("JWT inválido o vacío.");
         }
+    }
+
+    public String getUsername(String token) {
+        // En este contexto, el "username" es el subject del JWT (generalmente el email)
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return claims.getSubject();
     }
 }

@@ -1,25 +1,23 @@
 package co.rufe.rufe.security;
 
-import co.rufe.rufe.util.TenantContext;
-import co.rufe.rufe.dao.IMenuItemDao;
 import co.rufe.rufe.dao.IRolDao;
-import co.rufe.rufe.dao.IRolPermisoDao; // ¡Importante!
 import co.rufe.rufe.dao.IUsuarioDao;
-import co.rufe.rufe.model.MenuItem;
-import co.rufe.rufe.model.RolPermiso; // Necesario
+import co.rufe.rufe.dao.IPermisoDao;
+import co.rufe.rufe.model.Rol;
 import co.rufe.rufe.model.Usuario;
+import co.rufe.rufe.model.Permiso;
+import co.rufe.rufe.util.TenantContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,64 +26,54 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final IUsuarioDao usuarioDao;
     private final IRolDao rolDao;
-    private final IRolPermisoDao rolPermisoDao; // Inyectado
-    private final IMenuItemDao menuItemDao;     // Inyectado
+    private final IPermisoDao permisoDao;
 
-    public CustomUserDetailsService(IUsuarioDao usuarioDao, IRolDao rolDao,
-                                    IRolPermisoDao rolPermisoDao, IMenuItemDao menuItemDao) {
+    public CustomUserDetailsService(IUsuarioDao usuarioDao, IRolDao rolDao, IPermisoDao permisoDao) {
         this.usuarioDao = usuarioDao;
         this.rolDao = rolDao;
-        this.rolPermisoDao = rolPermisoDao;
-        this.menuItemDao = menuItemDao;
+        this.permisoDao = permisoDao;
     }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario usuario;
-        Long currentOrgId = TenantContext.getCurrentOrganizationId();
+        Usuario usuario = usuarioDao.findByEmail(email)
+                .orElseThrow(() -> {
+                    log.error("Usuario no encontrado con email: {}", email);
+                    return new UsernameNotFoundException("Usuario no encontrado con email: " + email);
+                });
 
-        if (currentOrgId != null) {
-            usuario = usuarioDao.findByOrganizacionIdAndEmail(currentOrgId, email)
-                    .orElseThrow(() -> new UsernameNotFoundException(
-                            "User not found with email: " + email + " in organization ID: " + currentOrgId));
-        } else {
-            usuario = usuarioDao.findByEmail(email)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
-
-            if (usuario.getOrganizacionId() == null) {
-                log.error("User {} found without an associated organization ID.", email);
-                throw new UsernameNotFoundException("User not associated with an organization.");
-            }
-            TenantContext.setCurrentOrganizationId(usuario.getOrganizacionId());
+        if (usuario.getOrganizacionId() == null) {
+            log.error("Usuario {} encontrado sin un ID de organización asociado.", email);
+            throw new UsernameNotFoundException("Usuario no asociado con una organización.");
         }
 
-        if (!usuario.getActivo()) {
-            throw new UsernameNotFoundException("User is inactive: " + email);
-        }
+        TenantContext.setCurrentOrganizationId(usuario.getOrganizacionId());
+        log.debug("TenantContext.CurrentOrganizationId establecido para usuario {}: {}", email, usuario.getOrganizacionId());
 
-        // Obtener el nombre del rol del usuario (si aún quieres ROLE_ prefix)
-        String roleName = rolDao.findById(usuario.getRolId())
-                .map(co.rufe.rufe.model.Rol::getNombreRol)
-                .orElseThrow(() -> new UsernameNotFoundException("Role not found for user: " + email));
+        Rol rol = rolDao.findById(usuario.getRolId())
+                .orElseThrow(() -> {
+                    log.error("Rol no encontrado con ID: {}", usuario.getRolId());
+                    return new UsernameNotFoundException("Rol no encontrado para el usuario.");
+                });
 
-        // Obtener los IDs de los MenuItems asociados a este rol a través de la tabla rol_permisos
-        Set<Long> menuItemIds = rolPermisoDao.findByRolId(usuario.getRolId()).stream()
-                .map(RolPermiso::getMenuItemId)
-                .collect(Collectors.toSet());
+        List<Permiso> permisos = permisoDao.findByRolId(rol.getId());
+        log.debug("Permisos cargados para el rol {}: {}", rol.getNombreRol(),
+        permisos.stream().map(Permiso::getNombrePermiso).collect(Collectors.joining(", ")));
 
-        // Obtener los objetos MenuItem completos usando los IDs
-        List<MenuItem> permisos = menuItemDao.findByIds(menuItemIds);
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        // Añadir el rol del usuario como una autoridad (convención "ROLE_")
+        // Usar .toUpperCase() en el nombre del rol es una convención común, asegúrate de que esto coincida
+        // con cómo esperas validar roles con hasRole().
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + rol.getNombreRol().toUpperCase()));
+        
+        // Añadir cada permiso como una autoridad, usando directamente el nombre_permiso
+        // que viene de la base de datos (ej: "organizaciones:crear")
+        permisos.forEach(permiso -> authorities.add(new SimpleGrantedAuthority(permiso.getNombrePermiso())));
 
-        // Convertir los MenuItems (permisos) en GrantedAuthorities
-        Collection<GrantedAuthority> authorities = permisos.stream()
-                .map(menuItem -> new SimpleGrantedAuthority(menuItem.getNombreItem().toUpperCase())) // ¡Usamos nombre_item como autoridad!
-                .collect(Collectors.toSet());
-
-        // Opcional: También añade el rol como una autoridad (ROLE_NOMBRE_ROL) si lo necesitas para hasRole() en algún lugar
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName.toUpperCase()));
-
-        return new User(usuario.getEmail(),
-                        usuario.getPasswordHash(),
-                        authorities);
+        return new org.springframework.security.core.userdetails.User(
+                usuario.getEmail(),
+                usuario.getPasswordHash(),
+                authorities
+        );
     }
 }

@@ -8,6 +8,18 @@ import co.rufe.rufe.model.Rol;
 import co.rufe.rufe.model.RolPermiso;
 import co.rufe.rufe.model.Usuario;
 import co.rufe.rufe.model.UsuarioWithDetails;
+import co.rufe.rufe.model.catalogo.EstadoBien;
+import co.rufe.rufe.model.catalogo.FormaTenenciaBien;
+import co.rufe.rufe.model.catalogo.Genero;
+import co.rufe.rufe.model.catalogo.Parentesco;
+import co.rufe.rufe.model.catalogo.PertenenciaEtnica;
+import co.rufe.rufe.model.catalogo.TipoAlojamientoActual;
+import co.rufe.rufe.model.catalogo.TipoBien;
+import co.rufe.rufe.model.catalogo.TipoDocumento;
+import co.rufe.rufe.model.catalogo.TipoUbicacionBien;
+import co.rufe.rufe.model.catalogo.Departamento;
+import co.rufe.rufe.model.catalogo.Municipio;
+import co.rufe.rufe.model.catalogo.Evento;
 
 import org.springframework.jdbc.core.RowMapper;
 
@@ -56,8 +68,8 @@ public class CustomRowMappers {
     // Mapper para la entidad MenuItem
     public static final RowMapper<MenuItem> MENU_ITEM_ROW_MAPPER = (rs, rowNum) -> {
         MenuItem item = new MenuItem();
-        item.setId(rs.getLong("id"));
-        long parentId = rs.getLong("parent_id");
+        item.setId(rs.getInt("id"));
+        Integer parentId = rs.getInt("parent_id");
         if (!rs.wasNull()) { // Check if parent_id was actually NULL in DB
             item.setParentId(parentId);
         }else {
@@ -101,7 +113,7 @@ public class CustomRowMappers {
     }
 
     public static final RowMapper<Permiso> PERMISO_ROW_MAPPER = (rs, rowNum) -> Permiso.builder()
-            .id(rs.getLong("id"))
+            .id(rs.getInt("id"))
             .nombrePermiso(rs.getString("nombre_permiso"))
             .build();
 
@@ -115,4 +127,65 @@ public class CustomRowMappers {
             .menuItemId(rs.getInt("menu_item_id"))
             .permisoId(rs.getInt("permiso_id"))
             .build();
+
+    public static final RowMapper<TipoUbicacionBien> TIPO_UBICACION_BIEN_ROW_MAPPER = (rs, rowNum) -> TipoUbicacionBien.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<TipoAlojamientoActual> TIPO_ALOJAMIENTO_ACTUAL_ROW_MAPPER = (rs, rowNum) -> TipoAlojamientoActual.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<FormaTenenciaBien> FORMA_TENENCIA_BIEN_ROW_MAPPER = (rs, rowNum) -> FormaTenenciaBien.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<EstadoBien> ESTADO_BIEN_ROW_MAPPER = (rs, rowNum) -> EstadoBien.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<TipoBien> TIPO_BIEN_ROW_MAPPER = (rs, rowNum) -> TipoBien.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<TipoDocumento> TIPO_DOCUMENTO_ROW_MAPPER = (rs, rowNum) -> TipoDocumento.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<Parentesco> PARENTESCO_ROW_MAPPER = (rs, rowNum) -> Parentesco.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<Genero> GENERO_ROW_MAPPER = (rs, rowNum) -> Genero.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<PertenenciaEtnica> PERTENENCIA_ETNICA_ROW_MAPPER = (rs, rowNum) -> PertenenciaEtnica.builder()
+            .id(rs.getInt("id"))
+            .nombre(rs.getString("nombre"))
+            .build();
+
+    public static final RowMapper<Departamento> DEPARTAMENTO_ROW_MAPPER = (rs, rowNum) ->Departamento.builder()
+        .id(rs.getInt("id"))
+        .nombre(rs.getString("nombre"))
+        .build();
+
+    public static final RowMapper<Municipio> MUNICIPIO_ROW_MAPPER = (rs, rowNum) ->Municipio.builder()
+        .id(rs.getInt("id"))
+        .nombre(rs.getString("nombre"))
+        .departamentoId(rs.getInt("departamento_id"))
+        .build();
+
+    public static final RowMapper<Evento> EVENTO_ROW_MAPPER = (rs, rowNum) ->Evento.builder()
+        .id(rs.getInt("id"))
+        .nombre(rs.getString("nombre"))
+        .build();
 }

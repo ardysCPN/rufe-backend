@@ -8,14 +8,24 @@ import co.rufe.rufe.model.MenuItem;
 
 public interface IMenuItemDao {
     MenuItem save(MenuItem menuItem);
-    Optional<MenuItem> findById(Long id);
+
+    // Cambiados de Long a Integer
+    Optional<MenuItem> findById(Integer id);
+    boolean existsById(Integer id);
+    boolean deleteById(Integer id); // Retorna boolean para indicar si se eliminó o no
+
     List<MenuItem> findAll();
-    List<MenuItem> findByParentId(Long parentId);
-    MenuItem update(MenuItem menuItem);
-    boolean deleteById(Long id);
-    boolean existsById(Long id);
+    List<MenuItem> findByParentId(Integer parentId); // Cambiado de Long a Integer
+    MenuItem update(MenuItem menuItem); // Asumiendo que esta es una operación de bajo nivel que el DAO maneja
+
     boolean existsByNombreItem(String nombreItem);
-    List<MenuItem> findByIds(Set<Long> ids);
     Optional<MenuItem> findByNombreItem(String nombreItem);
-    List<MenuItem> findAllById(List<Long> menuItemIds);
+    Optional<MenuItem> findByNombreItemAndParentId(String nombreItem, Integer parentId); // Cambiado de Long a Integer
+
+    // Modificado para usar List<Integer> ya que los IDs de MenuItem son Integer
+    List<MenuItem> findAllById(List<Integer> menuItemIds); // Para buscar múltiples MenuItems por sus IDs
+
+    // Si tu findByIds usa un Set, asegúrate de que sea Set<Integer>
+    List<MenuItem> findByIds(Set<Integer> ids); // Cambiado de Set<Long> a Set<Integer>
+
 }

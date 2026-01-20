@@ -14,4 +14,5 @@ public interface IRolDao {
     boolean deleteById(Long id);
     boolean existsById(Long id);
     boolean existsByOrganizacionIdAndNombreRol(Long organizacionId, String nombreRol);
+    Optional<Rol> findByNombreRolAndOrganizacionId(String nombre, Long organizacionId);
 }
