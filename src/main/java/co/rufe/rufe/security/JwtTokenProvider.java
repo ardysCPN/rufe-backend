@@ -14,8 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey; // Usar javax.crypto.SecretKey
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+
 import java.util.stream.Collectors;
 import java.util.Collection; // Importar Collection
 
@@ -48,15 +47,19 @@ public class JwtTokenProvider {
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + jwtExpirationMs);
 
-        // Claims personalizados (opcional, si quieres mantener userId, organizacionId, etc. explícitos)
-        // Puedes obtener estos del UserDetails si tu CustomUserDetailsService devuelve un UserDetails personalizado
-        // que contenga estos campos. Por simplicidad, solo incluimos las "authorities" como una claim.
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("authorities", authoritiesString);
-
+        // Claims personalizados (opcional, si quieres mantener userId, organizacionId,
+        // etc. explícitos)
+        // Puedes obtener estos del UserDetails si tu CustomUserDetailsService devuelve
+        // un UserDetails personalizado
+        // que contenga estos campos. Por simplicidad, solo incluimos las "authorities"
+        // como una claim.
+        // Claims personalizados
+        // CORRECCIÓN: Guardar authorities directamente como String, sin Map anidado.
+        // Esto permite que JwtAuthenticationFilter lo lea como un simple claim de
+        // texto.
         return Jwts.builder()
                 .subject(email)
-                .claim("authorities", claims) // Añade los claims, incluyendo las autoridades
+                .claim("authorities", authoritiesString) // Guardar como String plano: "ROLE_ADMIN,perm1,perm2"
                 .issuedAt(currentDate)
                 .expiration(expireDate)
                 .signWith(getSigningKey())
@@ -75,7 +78,8 @@ public class JwtTokenProvider {
 
     // Obtiene el ID de la organización del JWT
     // NOTA: Si el organizacionId no se guarda como un claim en generateToken,
-    // este método no podrá extraerlo. Considera añadirlo a los claims si es necesario.
+    // este método no podrá extraerlo. Considera añadirlo a los claims si es
+    // necesario.
     public Long getOrganizacionIdFromJwt(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -87,8 +91,10 @@ public class JwtTokenProvider {
         if (organizacionIdObj instanceof Number) {
             return ((Number) organizacionIdObj).longValue();
         }
-        // Si no se encuentra o no es un número, podrías lanzar una excepción o devolver null
-        log.warn("Claim 'organizacionId' no encontrado o no es un número válido en el token JWT: {}", organizacionIdObj);
+        // Si no se encuentra o no es un número, podrías lanzar una excepción o devolver
+        // null
+        log.warn("Claim 'organizacionId' no encontrado o no es un número válido en el token JWT: {}",
+                organizacionIdObj);
         return null; // O lanza una IllegalArgumentException
     }
 

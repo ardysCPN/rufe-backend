@@ -45,9 +45,10 @@ public class MenuItemController {
     @PostMapping
     // Crear MenuItem: Esta operación solo debe ser realizada por un ADMIN_GLOBAL
     // ya que los items de menú son globales (no por organización).
-    // El {organizacionId} en la ruta es solo para mantener la coherencia del path general,
+    // El {organizacionId} en la ruta es solo para mantener la coherencia del path
+    // general,
     // pero la lógica de este endpoint no lo usa para filtrar el item de menú.
-    @PreAuthorize("hasAuthority('organizaciones:crear') or hasAuthority('menu:crear') and hasAuthority('ROLE_ADMIN_GLOBAL')")
+    @PreAuthorize("(hasAuthority('organizaciones:crear') or hasAuthority('menu:crear')) and hasAuthority('ROLE_ADMIN_GLOBAL')")
     public ResponseEntity<MenuItemResponse> createMenuItem(
             @PathVariable Long organizacionId, // Se mantiene en el path, pero el item de menú no se asocia a ella
             @Valid @RequestBody MenuItemRequest request) {
@@ -57,24 +58,28 @@ public class MenuItemController {
     }
 
     @GetMapping("/{menuItemId}")
-    // Leer MenuItem por ID: Puede ser leído por cualquier ADMIN_GLOBAL, o ADMIN_ORGANIZACION
+    // Leer MenuItem por ID: Puede ser leído por cualquier ADMIN_GLOBAL, o
+    // ADMIN_ORGANIZACION
     // con el permiso 'menu:leer' y que pertenezca a la organización.
     @PreAuthorize("hasAuthority('menu:leer') and @securityUtils.isUserInOrganization(#organizacionId)")
     public ResponseEntity<MenuItemResponse> getMenuItemById(
             @PathVariable Long organizacionId,
             @PathVariable Integer menuItemId) { // Tipo de ID ajustado
-        log.info("Solicitud para obtener ítem de menú con ID: {} en contexto de organización ID: {}", menuItemId, organizacionId);
+        log.info("Solicitud para obtener ítem de menú con ID: {} en contexto de organización ID: {}", menuItemId,
+                organizacionId);
         MenuItemResponse response = menuItemService.getMenuItemById(menuItemId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/nombre/{nombreItem}")
-    // Leer MenuItem por nombre: Permiso 'menu:leer' y pertenencia a la organización.
+    // Leer MenuItem por nombre: Permiso 'menu:leer' y pertenencia a la
+    // organización.
     @PreAuthorize("hasAuthority('menu:leer') and @securityUtils.isUserInOrganization(#organizacionId)")
     public ResponseEntity<MenuItemResponse> getMenuItemByNombre(
             @PathVariable Long organizacionId,
             @PathVariable String nombreItem) {
-        log.info("Solicitud para obtener ítem de menú con nombre: {} en contexto de organización ID: {}", nombreItem, organizacionId);
+        log.info("Solicitud para obtener ítem de menú con nombre: {} en contexto de organización ID: {}", nombreItem,
+                organizacionId);
         MenuItemResponse response = menuItemService.getMenuItemByNombre(nombreItem);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -85,13 +90,15 @@ public class MenuItemController {
     public ResponseEntity<List<MenuItemResponse>> getSubMenuItems(
             @PathVariable Long organizacionId,
             @PathVariable Integer parentId) { // Tipo de ID ajustado
-        log.info("Solicitud para obtener sub-ítems de menú para parentId: {} en contexto de organización ID: {}", parentId, organizacionId);
+        log.info("Solicitud para obtener sub-ítems de menú para parentId: {} en contexto de organización ID: {}",
+                parentId, organizacionId);
         List<MenuItemResponse> responses = menuItemService.getSubMenuItems(parentId);
         return new ResponseEntity<>(responses, HttpStatus.OK);
     }
 
     @GetMapping("/all") // Añadido un path para evitar conflicto con / si hay otros @GetMapping sin path
-    // Listar todos los MenuItems (para la gestión interna): Permiso 'menu:leer' y pertenencia a la organización.
+    // Listar todos los MenuItems (para la gestión interna): Permiso 'menu:leer' y
+    // pertenencia a la organización.
     @PreAuthorize("hasAuthority('menu:leer') and @securityUtils.isUserInOrganization(#organizacionId)")
     public ResponseEntity<List<MenuItemResponse>> getAllMenuItems(
             @PathVariable Long organizacionId) {
@@ -107,7 +114,8 @@ public class MenuItemController {
             @PathVariable Long organizacionId,
             @PathVariable Integer menuItemId, // Tipo de ID ajustado
             @Valid @RequestBody MenuItemRequest request) {
-        log.info("Solicitud para actualizar ítem de menú con ID: {} en contexto de organización ID: {}", menuItemId, organizacionId);
+        log.info("Solicitud para actualizar ítem de menú con ID: {} en contexto de organización ID: {}", menuItemId,
+                organizacionId);
         MenuItemResponse response = menuItemService.updateMenuItem(menuItemId, request);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
@@ -118,14 +126,18 @@ public class MenuItemController {
     public ResponseEntity<Void> deleteMenuItem(
             @PathVariable Long organizacionId,
             @PathVariable Integer menuItemId) { // Tipo de ID ajustado
-        log.info("Solicitud para eliminar ítem de menú con ID: {} en contexto de organización ID: {}", menuItemId, organizacionId);
+        log.info("Solicitud para eliminar ítem de menú con ID: {} en contexto de organización ID: {}", menuItemId,
+                organizacionId);
         menuItemService.deleteMenuItem(menuItemId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // --- Endpoints para Gestión de Permisos ASOCIADOS a un MenuItem (Visibilidad) ---
-    // NOTA: Estos endpoints gestionan qué permisos se requieren para *ver* un MenuItem,
-    // NO asignan MenuItems a Roles. La asignación de permisos a Roles se gestionaría
+    // --- Endpoints para Gestión de Permisos ASOCIADOS a un MenuItem (Visibilidad)
+    // ---
+    // NOTA: Estos endpoints gestionan qué permisos se requieren para *ver* un
+    // MenuItem,
+    // NO asignan MenuItems a Roles. La asignación de permisos a Roles se
+    // gestionaría
     // en un controlador de Roles/Permisos.
 
     @PostMapping("/{menuItemId}/permisos/{permisoId}")
@@ -135,7 +147,8 @@ public class MenuItemController {
             @PathVariable Long organizacionId, // Se mantiene por el path general
             @PathVariable Integer menuItemId, // Tipo de ID ajustado
             @PathVariable Integer permisoId) { // Tipo de ID ajustado
-        log.info("Asignando Permiso ID: {} a MenuItem ID: {} en organización ID: {}", permisoId, menuItemId, organizacionId);
+        log.info("Asignando Permiso ID: {} a MenuItem ID: {} en organización ID: {}", permisoId, menuItemId,
+                organizacionId);
         menuItemService.assignPermisoToMenuItem(menuItemId, permisoId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
@@ -147,38 +160,47 @@ public class MenuItemController {
             @PathVariable Long organizacionId, // Se mantiene por el path general
             @PathVariable Integer menuItemId, // Tipo de ID ajustado
             @PathVariable Integer permisoId) { // Tipo de ID ajustado
-        log.info("Revocando Permiso ID: {} de MenuItem ID: {} en organización ID: {}", permisoId, menuItemId, organizacionId);
+        log.info("Revocando Permiso ID: {} de MenuItem ID: {} en organización ID: {}", permisoId, menuItemId,
+                organizacionId);
         menuItemService.revokePermisoFromMenuItem(menuItemId, permisoId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     @GetMapping("/{menuItemId}/permisos")
-    // Obtener Permisos asociados a un MenuItem: Permiso 'menu:leer' y pertenencia a la organización.
+    // Obtener Permisos asociados a un MenuItem: Permiso 'menu:leer' y pertenencia a
+    // la organización.
     @PreAuthorize("hasAuthority('menu:leer') and @securityUtils.isUserInOrganization(#organizacionId)")
     public ResponseEntity<List<PermisoResponse>> getPermisosByMenuItemId(
             @PathVariable Long organizacionId, // Se mantiene por el path general
             @PathVariable Integer menuItemId) { // Tipo de ID ajustado
-        log.info("Solicitud para obtener Permisos asociados a MenuItem ID: {} en organización ID: {}", menuItemId, organizacionId);
+        log.info("Solicitud para obtener Permisos asociados a MenuItem ID: {} en organización ID: {}", menuItemId,
+                organizacionId);
         List<PermisoResponse> responses = menuItemService.getPermisosByMenuItemId(menuItemId);
         return new ResponseEntity<>(responses, HttpStatus.OK);
     }
 
     // --- Endpoint para Obtener el Menú Dinámico del Usuario ---
-    // Este endpoint es fundamental para el frontend, y NO debe estar dentro de /{organizacionId}/menu-items
-    // ya que opera sobre los permisos globales del usuario, no los permisos de una organización específica para el menú.
-    // Además, el filtro de seguridad ya habrá establecido el TenantContext si el JWT es válido.
+    // Este endpoint es fundamental para el frontend, y NO debe estar dentro de
+    // /{organizacionId}/menu-items
+    // ya que opera sobre los permisos globales del usuario, no los permisos de una
+    // organización específica para el menú.
+    // Además, el filtro de seguridad ya habrá establecido el TenantContext si el
+    // JWT es válido.
 
     // Un endpoint más adecuado sería /api/menu/dynamic o /api/users/me/menu
     @GetMapping("/dynamic-menu")
     // Obtener el menú dinámico para el usuario autenticado.
     // Solo requiere que el usuario esté autenticado y en la organización adecuada.
-    // La filtración del menú se hace *dentro* del servicio basado en los permisos del usuario.
-    // NOTA: El `organizacionId` en la URL es redundante aquí porque el usuario ya tiene su organización
+    // La filtración del menú se hace *dentro* del servicio basado en los permisos
+    // del usuario.
+    // NOTA: El `organizacionId` en la URL es redundante aquí porque el usuario ya
+    // tiene su organización
     // en el token, pero se mantiene por consistencia con la ruta base si se desea.
     @PreAuthorize("isAuthenticated() and @securityUtils.isUserInOrganization(#organizacionId)")
     public ResponseEntity<List<MenuItemResponse>> getDynamicMenuForAuthenticatedUser(
             @PathVariable Long organizacionId) {
-        log.info("Solicitud para obtener el menú dinámico para el usuario autenticado en organización ID: {}", organizacionId);
+        log.info("Solicitud para obtener el menú dinámico para el usuario autenticado en organización ID: {}",
+                organizacionId);
 
         // Obtener los permisos del usuario autenticado desde el contexto de seguridad
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

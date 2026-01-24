@@ -24,37 +24,44 @@ public class UsuarioController {
     }
 
     @PostMapping
-    // Permite crear un usuario dentro de una organización si se tiene el permiso y se pertenece a ella.
-    @PreAuthorize("hasAuthority('USUARIO_CREATE') and @securityUtils.isUserInOrganization(#organizacionId)")
-    public ResponseEntity<UsuarioResponse> createUsuario(@PathVariable Long organizacionId, @Valid @RequestBody UsuarioRequest request) {
+    // Permite crear un usuario dentro de una organización si se tiene el permiso y
+    // se pertenece a ella.
+    @PreAuthorize("hasAuthority('usuarios:crear') and @securityUtils.isUserInOrganization(#organizacionId)")
+    public ResponseEntity<UsuarioResponse> createUsuario(@PathVariable Long organizacionId,
+            @Valid @RequestBody UsuarioRequest request) {
         log.info("Solicitud para crear usuario '{}' en organización ID: {}", request.getEmail(), organizacionId);
         UsuarioResponse response = usuarioService.createUsuario(organizacionId, request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/{usuarioId}")
-    // Permite leer un usuario específico si se tiene el permiso y el usuario pertenece a la organización
+    // Permite leer un usuario específico si se tiene el permiso y el usuario
+    // pertenece a la organización
     // (validando que el usuarioId también pertenezca a esa organizacionId).
-    @PreAuthorize("hasAuthority('USUARIO_READ') and @securityUtils.isUserInUserOrganization(#usuarioId, #organizacionId)")
-    public ResponseEntity<UsuarioResponse> getUsuarioById(@PathVariable Long organizacionId, @PathVariable Long usuarioId) {
+    @PreAuthorize("hasAuthority('usuarios:leer') and @securityUtils.isUserInUserOrganization(#usuarioId, #organizacionId)")
+    public ResponseEntity<UsuarioResponse> getUsuarioById(@PathVariable Long organizacionId,
+            @PathVariable Long usuarioId) {
         log.info("Solicitud para obtener usuario con ID {} en organización ID: {}", usuarioId, organizacionId);
         UsuarioResponse response = usuarioService.getUsuarioById(usuarioId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/email/{email}")
-    // Permite leer un usuario por email si se tiene el permiso y el usuario pertenece a la organización
+    // Permite leer un usuario por email si se tiene el permiso y el usuario
+    // pertenece a la organización
     // (validando que el email corresponde a un usuario de esa organizacionId).
-    @PreAuthorize("hasAuthority('USUARIO_READ') and @securityUtils.isUserInOrganizationAndEmailMatches(#organizacionId, #email)")
-    public ResponseEntity<UsuarioResponse> getUsuarioByEmail(@PathVariable Long organizacionId, @PathVariable String email) {
+    @PreAuthorize("hasAuthority('usuarios:leer') and @securityUtils.isUserInOrganizationAndEmailMatches(#organizacionId, #email)")
+    public ResponseEntity<UsuarioResponse> getUsuarioByEmail(@PathVariable Long organizacionId,
+            @PathVariable String email) {
         log.info("Solicitud para obtener usuario con email '{}' en organización ID: {}", email, organizacionId);
         UsuarioResponse response = usuarioService.getUsuarioByEmail(organizacionId, email);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping
-    // Permite listar usuarios de una organización si se tiene el permiso y se pertenece a ella.
-    @PreAuthorize("hasAuthority('USUARIO_LIST') and @securityUtils.isUserInOrganization(#organizacionId)")
+    // Permite listar usuarios de una organización si se tiene el permiso y se
+    // pertenece a ella.
+    @PreAuthorize("hasAuthority('usuarios:leer') and @securityUtils.isUserInOrganization(#organizacionId)")
     public ResponseEntity<List<UsuarioResponse>> getUsuariosByOrganizacionId(@PathVariable Long organizacionId) {
         log.info("Solicitud para obtener usuarios de organización ID: {}", organizacionId);
         List<UsuarioResponse> responses = usuarioService.getUsuariosByOrganizacionId(organizacionId);
@@ -62,17 +69,20 @@ public class UsuarioController {
     }
 
     @PutMapping("/{usuarioId}")
-    // Permite actualizar un usuario específico si se tiene el permiso y el usuario pertenece a la organización.
-    @PreAuthorize("hasAuthority('USUARIO_UPDATE') and @securityUtils.isUserInUserOrganization(#usuarioId, #organizacionId)")
-    public ResponseEntity<UsuarioResponse> updateUsuario(@PathVariable Long organizacionId, @PathVariable Long usuarioId, @Valid @RequestBody UsuarioRequest request) {
+    // Permite actualizar un usuario específico si se tiene el permiso y el usuario
+    // pertenece a la organización.
+    @PreAuthorize("hasAuthority('usuarios:actualizar') and @securityUtils.isUserInUserOrganization(#usuarioId, #organizacionId)")
+    public ResponseEntity<UsuarioResponse> updateUsuario(@PathVariable Long organizacionId,
+            @PathVariable Long usuarioId, @Valid @RequestBody UsuarioRequest request) {
         log.info("Solicitud para actualizar usuario con ID {} en organización ID: {}", usuarioId, organizacionId);
         UsuarioResponse response = usuarioService.updateUsuario(usuarioId, organizacionId, request);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/{usuarioId}")
-    // Permite eliminar un usuario específico si se tiene el permiso y el usuario pertenece a la organización.
-    @PreAuthorize("hasAuthority('USUARIO_DELETE') and @securityUtils.isUserInUserOrganization(#usuarioId, #organizacionId)")
+    // Permite eliminar un usuario específico si se tiene el permiso y el usuario
+    // pertenece a la organización.
+    @PreAuthorize("hasAuthority('usuarios:eliminar') and @securityUtils.isUserInUserOrganization(#usuarioId, #organizacionId)")
     public ResponseEntity<Void> deleteUsuario(@PathVariable Long organizacionId, @PathVariable Long usuarioId) {
         log.info("Solicitud para eliminar usuario con ID {} en organización ID: {}", usuarioId, organizacionId);
         usuarioService.deleteUsuario(usuarioId, organizacionId);

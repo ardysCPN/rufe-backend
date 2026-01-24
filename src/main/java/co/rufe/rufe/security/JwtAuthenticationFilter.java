@@ -35,45 +35,66 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
         try {
             String token = getTokenFromRequest(request);
 
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
                 String username = jwtTokenProvider.getUsername(token);
-                // Long organizacionId = jwtTokenProvider.getOrganizacionIdFromJwt(token); // Si el organizacionId está en el JWT
+                // Long organizacionId = jwtTokenProvider.getOrganizacionIdFromJwt(token); // Si
+                // el organizacionId está en el JWT
 
-                // Cargar UserDetails: Esto es CRUCIAL. Aunque el token tenga claims de autoridades,
-                // siempre es mejor cargar los UserDetails frescos de la DB para asegurar que los
-                // permisos no estén desactualizados o manipulados, y para establecer el TenantContext.
+                // 1. Cargar UserDetails para tener el Principal (usuario) completo y verificar
+                // estado (enabled, etc.)
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                // 2. Obtener las autoridades (permisos) DIRECTAMENTE del JWT.
+                // Esto es crucial porque el JWT ya tiene los permisos "aplanados" y correctos
+                // (ej: "organizaciones:crear"),
+                // mientras que userDetails.getAuthorities() podría estar devolviendo solo roles
+                // o una estructura diferente
+                // desde la base de datos que no coincide con los @PreAuthorize.
+                String authoritiesString = jwtTokenProvider.getAuthoritiesFromJwt(token);
+
+                Collection<? extends GrantedAuthority> authorities;
+                if (StringUtils.hasText(authoritiesString)) {
+                    authorities = Arrays.stream(authoritiesString.split(","))
+                            .filter(auth -> !auth.trim().isEmpty())
+                            .map(SimpleGrantedAuthority::new)
+                            .collect(Collectors.toList());
+                } else {
+                    authorities = userDetails.getAuthorities(); // Fallback si el token no tiene autoridades (raro)
+                }
 
                 // El TenantContext.setCurrentOrganizationId() ya debería haber sido llamado
                 // dentro de CustomUserDetailsService.loadUserByUsername(username).
-                // Si no es el caso, deberías obtener el organizacionId del userDetails o del JWT y establecerlo aquí.
-                // Ejemplo: TenantContext.setCurrentOrganizationId(((CustomUserDetails) userDetails).getOrganizacionId());
+                // Si no es el caso, deberías obtener el organizacionId del userDetails o del
+                // JWT y establecerlo aquí.
+                // Ejemplo: TenantContext.setCurrentOrganizationId(((CustomUserDetails)
+                // userDetails).getOrganizacionId());
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails,
                         null, // La contraseña ya no es necesaria aquí
-                        userDetails.getAuthorities() // Usar las autoridades obtenidas de UserDetails (DB)
+                        authorities // <--- USAR LAS AUTORIDADES DEL JWT
                 );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.debug("Usuario {} autenticado con las autoridades: {}", username,
-                        userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(",")));
+                log.debug("Usuario {} autenticado con las autoridades del JWT: {}", username, authoritiesString);
             }
             // Continuar con la cadena de filtros
             filterChain.doFilter(request, response);
         } catch (Exception ex) {
             // Capturar excepciones para que CustomAuthenticationEntryPoint las maneje
             log.error("Error en JwtAuthenticationFilter: {}", ex.getMessage(), ex);
-            // Lanzar la excepción para que Spring Security la intercepte y la maneje con AuthenticationEntryPoint
+            // Lanzar la excepción para que Spring Security la intercepte y la maneje con
+            // AuthenticationEntryPoint
             throw ex;
         } finally {
-            // No limpiar el TenantContext aquí si tienes un filtro dedicado (TenantContextCleanupFilter)
+            // No limpiar el TenantContext aquí si tienes un filtro dedicado
+            // (TenantContextCleanupFilter)
             // que se ejecuta DESPUÉS de este filtro en la cadena de seguridad.
             // Si no lo tienes configurado así, deberías limpiar el TenantContext aquí.
             // TenantContext.clear();
