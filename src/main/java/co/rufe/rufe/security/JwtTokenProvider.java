@@ -35,8 +35,10 @@ public class JwtTokenProvider {
     }
 
     // Genera el token JWT
-    // Modificado para aceptar Authentication y Collection<GrantedAuthority>
-    public String generateToken(Authentication authentication, Collection<? extends GrantedAuthority> authorities) {
+    // Modificado para aceptar Authentication, Collection<GrantedAuthority> y
+    // detalles del usuario
+    public String generateToken(Authentication authentication, Collection<? extends GrantedAuthority> authorities,
+            Long userId, Long rolId, String rolNombre, String nombreCompleto) {
         String email = authentication.getName(); // El subject es el email
 
         // Convertir las autoridades a una cadena separada por comas
@@ -47,19 +49,13 @@ public class JwtTokenProvider {
         Date currentDate = new Date();
         Date expireDate = new Date(currentDate.getTime() + jwtExpirationMs);
 
-        // Claims personalizados (opcional, si quieres mantener userId, organizacionId,
-        // etc. explícitos)
-        // Puedes obtener estos del UserDetails si tu CustomUserDetailsService devuelve
-        // un UserDetails personalizado
-        // que contenga estos campos. Por simplicidad, solo incluimos las "authorities"
-        // como una claim.
-        // Claims personalizados
-        // CORRECCIÓN: Guardar authorities directamente como String, sin Map anidado.
-        // Esto permite que JwtAuthenticationFilter lo lea como un simple claim de
-        // texto.
         return Jwts.builder()
                 .subject(email)
-                .claim("authorities", authoritiesString) // Guardar como String plano: "ROLE_ADMIN,perm1,perm2"
+                .claim("authorities", authoritiesString)
+                .claim("user_id", userId)
+                .claim("rol_id", rolId)
+                .claim("rol", rolNombre)
+                .claim("nombre", nombreCompleto)
                 .issuedAt(currentDate)
                 .expiration(expireDate)
                 .signWith(getSigningKey())

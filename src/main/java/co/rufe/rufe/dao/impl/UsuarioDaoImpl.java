@@ -33,8 +33,9 @@ public class UsuarioDaoImpl implements IUsuarioDao {
 
     @Override
     public Usuario save(Usuario usuario) {
-        String sql = "INSERT INTO usuarios (organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion) " +
-                     "VALUES (:organizacionId, :rolId, :nombreCompleto, :email, :passwordHash, :activo, NOW(), NOW())";
+        String sql = "INSERT INTO usuarios (organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion) "
+                +
+                "VALUES (:organizacionId, :rolId, :nombreCompleto, :email, :passwordHash, :activo, NOW(), NOW())";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         MapSqlParameterSource params = new MapSqlParameterSource();
@@ -45,7 +46,7 @@ public class UsuarioDaoImpl implements IUsuarioDao {
         params.addValue("passwordHash", usuario.getPasswordHash());
         params.addValue("activo", usuario.getActivo() != null ? usuario.getActivo() : true); // Default si es null
 
-        namedParameterJdbcTemplate.update(sql, params, keyHolder, new String[]{"id"});
+        namedParameterJdbcTemplate.update(sql, params, keyHolder, new String[] { "id" });
 
         long newId = Objects.requireNonNull(keyHolder.getKey()).longValue();
         usuario.setId(newId);
@@ -54,13 +55,15 @@ public class UsuarioDaoImpl implements IUsuarioDao {
 
     @Override
     public Optional<Usuario> findById(Long id) {
-        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion " +
-                     "FROM usuarios WHERE id = :id AND organizacion_id = :organizacionId";
+        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion "
+                +
+                "FROM usuarios WHERE id = :id AND organizacion_id = :organizacionId";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("id", id);
         params.addValue("organizacionId", TenantContext.getCurrentOrganizationId());
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
+            return Optional.ofNullable(
+                    namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -68,13 +71,15 @@ public class UsuarioDaoImpl implements IUsuarioDao {
 
     @Override
     public Optional<Usuario> findByOrganizacionIdAndEmail(Long organizacionId, String email) {
-        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion " +
-                     "FROM usuarios WHERE organizacion_id = :organizacionId AND email = :email";
+        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion "
+                +
+                "FROM usuarios WHERE organizacion_id = :organizacionId AND email = :email";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("organizacionId", organizacionId);
         params.addValue("email", email);
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
+            return Optional.ofNullable(
+                    namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -82,12 +87,15 @@ public class UsuarioDaoImpl implements IUsuarioDao {
 
     @Override
     public Optional<Usuario> findByEmail(String email) {
-        // Este método NO usa TenantContext porque está diseñado para el login inicial donde el TenantContext aún no está establecido.
-        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion " +
+        // Este método NO usa TenantContext porque está diseñado para el login inicial
+        // donde el TenantContext aún no está establecido.
+        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion "
+                +
                 "FROM usuarios WHERE email = :email";
         MapSqlParameterSource params = new MapSqlParameterSource("email", email);
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
+            return Optional.ofNullable(
+                    namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -95,8 +103,9 @@ public class UsuarioDaoImpl implements IUsuarioDao {
 
     @Override
     public List<Usuario> findByOrganizacionId(Long organizacionId) {
-        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion " +
-                     "FROM usuarios WHERE organizacion_id = :organizacionId ORDER BY nombre_completo";
+        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion "
+                +
+                "FROM usuarios WHERE organizacion_id = :organizacionId ORDER BY nombre_completo";
         MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
         return namedParameterJdbcTemplate.query(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER);
     }
@@ -104,8 +113,9 @@ public class UsuarioDaoImpl implements IUsuarioDao {
     @Override
     public Usuario update(Usuario usuario) {
         String sql = "UPDATE usuarios SET rol_id = :rolId, nombre_completo = :nombreCompleto, " +
-                     "email = :email, password_hash = :passwordHash, activo = :activo, fecha_actualizacion = NOW() " +
-                     "WHERE id = :id AND organizacion_id = :organizacionId"; // Aseguramos que solo se actualice dentro de la organización
+                "email = :email, password_hash = :passwordHash, activo = :activo, fecha_actualizacion = NOW() " +
+                "WHERE id = :id AND organizacion_id = :organizacionId"; // Aseguramos que solo se actualice dentro de la
+                                                                        // organización
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("rolId", usuario.getRolId());
         params.addValue("nombreCompleto", usuario.getNombreCompleto());
@@ -113,11 +123,13 @@ public class UsuarioDaoImpl implements IUsuarioDao {
         params.addValue("passwordHash", usuario.getPasswordHash());
         params.addValue("activo", usuario.getActivo());
         params.addValue("id", usuario.getId());
-        params.addValue("organizacionId", usuario.getOrganizacionId()); // El servicio debe setear esto o se toma del TenantContext
+        params.addValue("organizacionId", usuario.getOrganizacionId()); // El servicio debe setear esto o se toma del
+                                                                        // TenantContext
 
         int rowsAffected = namedParameterJdbcTemplate.update(sql, params);
         if (rowsAffected == 0) {
-            throw new ResourceNotFoundException("Usuario no encontrado con ID: " + usuario.getId() + " o no pertenece a la organización actual.");
+            throw new ResourceNotFoundException(
+                    "Usuario no encontrado con ID: " + usuario.getId() + " o no pertenece a la organización actual.");
         }
         return usuario;
     }
@@ -153,12 +165,13 @@ public class UsuarioDaoImpl implements IUsuarioDao {
 
     @Override
     public Set<Long> findMenuItemIdsByUserId(Long userId) {
-        // Esta consulta obtiene los IDs de los items de menú a los que tiene acceso un usuario
+        // Esta consulta obtiene los IDs de los items de menú a los que tiene acceso un
+        // usuario
         // a través de su rol, asegurando que estén dentro de la misma organización.
         String sql = "SELECT rpm.menu_item_id FROM usuarios u " +
-                     "JOIN roles r ON u.rol_id = r.id AND u.organizacion_id = r.organizacion_id " +
-                     "JOIN rol_permisos rpm ON r.id = rpm.rol_id " +
-                     "WHERE u.id = :userId AND u.organizacion_id = :organizacionId"; // Asegura multi-tenancy
+                "JOIN roles r ON u.rol_id = r.id AND u.organizacion_id = r.organizacion_id " +
+                "JOIN rol_permisos rpm ON r.id = rpm.rol_id " +
+                "WHERE u.id = :userId AND u.organizacion_id = :organizacionId"; // Asegura multi-tenancy
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("userId", userId);
         params.addValue("organizacionId", TenantContext.getCurrentOrganizationId());
@@ -168,13 +181,39 @@ public class UsuarioDaoImpl implements IUsuarioDao {
     }
 
     @Override
-    public Optional<UsuarioWithDetails> findUserWithDetailsByEmailAndOrganizationName(String email, String organizacionNombre) {
+    public Optional<UsuarioWithDetails> findUserWithDetailsByEmailAndOrganizationName(String email,
+            String organizacionNombre) {
         String sql = "SELECT * FROM get_user_details_for_login(:email, :organizacionNombre)";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("email", email);
         params.addValue("organizacionNombre", organizacionNombre);
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_WITH_DETAILS_ROW_MAPPER));
+            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params,
+                    CustomRowMappers.USUARIO_WITH_DETAILS_ROW_MAPPER));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<UsuarioWithDetails> findUserWithDetailsByEmail(String email) {
+        // Consulta SQL estándar con JOINs para obtener todos los detalles necesarios
+        // para el token
+        // asumiendo que el email es único o devolviendo el primero encontrado.
+        String sql = "SELECT u.id, u.organizacion_id, o.nombre_organizacion, o.activa as organizacion_activa, " +
+                "u.rol_id, r.nombre_rol, u.nombre_completo, u.email, u.password_hash, u.activo, " +
+                "u.fecha_creacion, u.fecha_actualizacion " +
+                "FROM usuarios u " +
+                "JOIN roles r ON u.rol_id = r.id " +
+                "JOIN organizaciones o ON u.organizacion_id = o.id " +
+                "WHERE u.email = :email";
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("email", email);
+
+        try {
+            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params,
+                    CustomRowMappers.USUARIO_WITH_DETAILS_ROW_MAPPER));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -182,13 +221,15 @@ public class UsuarioDaoImpl implements IUsuarioDao {
 
     @Override
     public Optional<Usuario> findByEmailAndOrganizacionId(String email, Long organizacionId) {
-        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion " +
-                     "FROM usuarios WHERE email = :email AND organizacion_id = :organizacionId";
+        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion "
+                +
+                "FROM usuarios WHERE email = :email AND organizacion_id = :organizacionId";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("email", email);
         params.addValue("organizacionId", organizacionId);
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
+            return Optional.ofNullable(
+                    namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }

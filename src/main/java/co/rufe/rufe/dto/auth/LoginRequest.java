@@ -18,7 +18,4 @@ public class LoginRequest {
     @Schema(description = "Contraseña del usuario", example = "PasswordSegura123")
     private String password;
 
-    @NotBlank(message = "El nombre de la organización no puede estar vacío.")
-    @Schema(description = "Nombre de la organización a la que pertenece el usuario", example = "MiEmpresaSAAS")
-    private String organizacion;
 }

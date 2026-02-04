@@ -48,7 +48,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         TenantContext.setCurrentOrganizationId(usuario.getOrganizacionId());
-        log.debug("TenantContext.CurrentOrganizationId establecido para usuario {}: {}", email, usuario.getOrganizacionId());
+        log.debug("TenantContext.CurrentOrganizationId establecido para usuario {}: {}", email,
+                usuario.getOrganizacionId());
 
         Rol rol = rolDao.findById(usuario.getRolId())
                 .orElseThrow(() -> {
@@ -58,22 +59,24 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         List<Permiso> permisos = permisoDao.findByRolId(rol.getId());
         log.debug("Permisos cargados para el rol {}: {}", rol.getNombreRol(),
-        permisos.stream().map(Permiso::getNombrePermiso).collect(Collectors.joining(", ")));
+                permisos.stream().map(Permiso::getNombrePermiso).collect(Collectors.joining(", ")));
 
         Collection<GrantedAuthority> authorities = new ArrayList<>();
         // Añadir el rol del usuario como una autoridad (convención "ROLE_")
-        // Usar .toUpperCase() en el nombre del rol es una convención común, asegúrate de que esto coincida
+        // Usar .toUpperCase() en el nombre del rol es una convención común, asegúrate
+        // de que esto coincida
         // con cómo esperas validar roles con hasRole().
         authorities.add(new SimpleGrantedAuthority("ROLE_" + rol.getNombreRol().toUpperCase()));
-        
+
         // Añadir cada permiso como una autoridad, usando directamente el nombre_permiso
         // que viene de la base de datos (ej: "organizaciones:crear")
         permisos.forEach(permiso -> authorities.add(new SimpleGrantedAuthority(permiso.getNombrePermiso())));
 
-        return new org.springframework.security.core.userdetails.User(
+        return new CustomUserDetails(
                 usuario.getEmail(),
                 usuario.getPasswordHash(),
-                authorities
-        );
+                authorities,
+                usuario.getId(),
+                usuario.getOrganizacionId());
     }
 }

@@ -8,12 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/organizaciones/{organizacionId}/roles")
+@RequestMapping("/api/roles")
 @Slf4j
 public class RolController {
 
@@ -24,59 +25,66 @@ public class RolController {
     }
 
     @PostMapping
-    // Ahora requiere el permiso 'roles:crear'
-    @PreAuthorize("hasAuthority('roles:crear') and @securityUtils.isUserInOrganization(#organizacionId)")
-    public ResponseEntity<RolResponse> createRol(@PathVariable Long organizacionId,
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<RolResponse> createRol(
+            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
             @Valid @RequestBody RolRequest request) {
-        log.info("Solicitud para crear rol '{}' en organización ID: {}", request.getNombreRol(), organizacionId);
-        RolResponse response = rolService.createRol(organizacionId, request);
+        log.info("Solicitud para crear rol '{}' en organización ID: {}", request.getNombreRol(),
+                userDetails.getOrganizacionId());
+        RolResponse response = rolService.createRol(userDetails.getOrganizacionId(), request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/{rolId}")
-    // Requiere el permiso 'roles:leer'
-    @PreAuthorize("hasAuthority('roles:leer') and @securityUtils.isUserInRoleOrganization(#rolId, #organizacionId)")
-    public ResponseEntity<RolResponse> getRolById(@PathVariable Long organizacionId, @PathVariable Long rolId) {
-        log.info("Solicitud para obtener rol con ID {} en organización ID: {}", rolId, organizacionId);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<RolResponse> getRolById(@PathVariable Long rolId) {
+        log.info("Solicitud para obtener rol con ID {}", rolId);
+        // Nota: Idealmente validar que el rol pertenezca a la organizacion del usuario
+        // si
+        // se requiere aislamiento estricto
         RolResponse response = rolService.getRolById(rolId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping("/nombre/{nombreRol}")
-    // Requiere el permiso 'roles:leer'
-    @PreAuthorize("hasAuthority('roles:leer') and @securityUtils.isUserInOrganization(#organizacionId)")
-    public ResponseEntity<RolResponse> getRolByNombre(@PathVariable Long organizacionId,
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<RolResponse> getRolByNombre(
+            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
             @PathVariable String nombreRol) {
-        log.info("Solicitud para obtener rol '{}' en organización ID: {}", nombreRol, organizacionId);
-        RolResponse response = rolService.getRolByNombre(organizacionId, nombreRol);
+        log.info("Solicitud para obtener rol '{}' en organización ID: {}", nombreRol, userDetails.getOrganizacionId());
+        RolResponse response = rolService.getRolByNombre(userDetails.getOrganizacionId(), nombreRol);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @GetMapping
-    // Requiere el permiso 'roles:leer'
-    @PreAuthorize("hasAuthority('roles:leer') and @securityUtils.isUserInOrganization(#organizacionId)")
-    public ResponseEntity<List<RolResponse>> getRolesByOrganizacionId(@PathVariable Long organizacionId) {
-        log.info("Solicitud para obtener roles de organización ID: {}", organizacionId);
-        List<RolResponse> responses = rolService.getRolesByOrganizacionId(organizacionId);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<RolResponse>> getRolesByOrganizacionId(
+            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails) {
+        log.info("Solicitud para obtener roles de organización ID: {}", userDetails.getOrganizacionId());
+        List<RolResponse> responses = rolService.getRolesByOrganizacionId(userDetails.getOrganizacionId());
         return new ResponseEntity<>(responses, HttpStatus.OK);
     }
 
     @PutMapping("/{rolId}")
-    // Requiere el permiso 'roles:actualizar'
-    @PreAuthorize("hasAuthority('roles:actualizar') and @securityUtils.isUserInRoleOrganization(#rolId, #organizacionId)")
-    public ResponseEntity<RolResponse> updateRol(@PathVariable Long organizacionId, @PathVariable Long rolId,
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<RolResponse> updateRol(
+            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
+            @PathVariable Long rolId,
             @Valid @RequestBody RolRequest request) {
-        log.info("Solicitud para actualizar rol con ID {} en organización ID: {}", rolId, organizacionId);
-        RolResponse response = rolService.updateRol(rolId, organizacionId, request);
+        log.info("Solicitud para actualizar rol con ID {} en organización ID: {}", rolId,
+                userDetails.getOrganizacionId());
+        RolResponse response = rolService.updateRol(rolId, userDetails.getOrganizacionId(), request);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @DeleteMapping("/{rolId}")
-    // Requiere el permiso 'roles:eliminar'
-    @PreAuthorize("hasAuthority('roles:eliminar') and @securityUtils.isUserInRoleOrganization(#rolId, #organizacionId)")
-    public ResponseEntity<Void> deleteRol(@PathVariable Long organizacionId, @PathVariable Long rolId) {
-        log.info("Solicitud para eliminar rol con ID {} en organización ID: {}", rolId, organizacionId);
-        rolService.deleteRol(rolId, organizacionId);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deleteRol(
+            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
+            @PathVariable Long rolId) {
+        log.info("Solicitud para eliminar rol con ID {} en organización ID: {}", rolId,
+                userDetails.getOrganizacionId());
+        rolService.deleteRol(rolId, userDetails.getOrganizacionId());
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
