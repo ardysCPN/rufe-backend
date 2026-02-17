@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+    name="sub_bienes"
+    pageWidth="555"
+    pageHeight="200"
+    columnWidth="555"
+    leftMargin="0"
+    rightMargin="0"
+    topMargin="0"
+    bottomMargin="0"
+    whenNoDataType="AllSectionsNoDetail">
+
+    <field name="tipoBienId" class="java.lang.Integer"/>
+    <field name="estadoBienId" class="java.lang.Integer"/>
+
+    <title>
+        <band height="25">
+            <staticText>
+                <reportElement x="0" y="5" width="555" height="20"/>
+                <textElement>
+                    <font size="12" isBold="true"/>
+                </textElement>
+                <text><![CDATA[BIENES AFECTADOS]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="250" height="20"/>
+                <textFieldExpression><![CDATA["Tipo Bien ID: " + $F{tipoBienId}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="260" y="0" width="250" height="20"/>
+                <textFieldExpression><![CDATA["Estado ID: " + $F{estadoBienId}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+</jasperReport>

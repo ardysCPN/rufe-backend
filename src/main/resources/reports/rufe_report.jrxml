@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+    http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+    name="rufe_report"
+    pageWidth="595"
+    pageHeight="842"
+    columnWidth="555"
+    leftMargin="20"
+    rightMargin="20"
+    topMargin="20"
+    bottomMargin="20">
+
+    <!-- ===================== FIELDS PRINCIPALES ===================== -->
+
+    <field name="eventoId" class="java.lang.Long"/>
+    <field name="tipoEventoId" class="java.lang.Long"/>
+    <field name="clienteId" class="java.lang.String"/>
+    <field name="fechaRegistro" class="java.time.LocalDateTime"/>
+    <field name="direccion" class="java.lang.String"/>
+    <field name="corregimiento" class="java.lang.String"/>
+    <field name="veredaSectorBarrio" class="java.lang.String"/>
+    <field name="lugarHabitualResidencia" class="java.lang.String"/>
+    <field name="observaciones" class="java.lang.String"/>
+    <field name="voBoCmgrd" class="java.lang.String"/>
+
+    <field name="integrantes" class="java.util.List"/>
+    <field name="bienesAfectados" class="java.util.List"/>
+    <field name="activosAgropecuarios" class="java.util.List"/>
+
+    <!-- ===================== PARAMETERS ===================== -->
+
+    <parameter name="SUBREPORT_DIR" class="java.lang.String"/>
+
+    <!-- ===================== TITLE ===================== -->
+
+    <title>
+        <band height="50">
+            <staticText>
+                <reportElement x="0" y="10" width="555" height="30"/>
+                <textElement textAlignment="Center">
+                    <font size="16" isBold="true"/>
+                </textElement>
+                <text><![CDATA[REGISTRO ÚNICO DE FAMILIAS AFECTADAS - RUFE]]></text>
+            </staticText>
+        </band>
+    </title>
+
+    <!-- ===================== DETAIL ===================== -->
+
+    <detail>
+        <band height="220">
+
+            <!-- Evento -->
+            <staticText>
+                <reportElement x="0" y="0" width="150" height="20"/>
+                <text><![CDATA[Evento ID:]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement x="150" y="0" width="200" height="20"/>
+                <textFieldExpression><![CDATA[$F{eventoId}]]></textFieldExpression>
+            </textField>
+
+            <!-- Tipo Evento -->
+            <staticText>
+                <reportElement x="0" y="25" width="150" height="20"/>
+                <text><![CDATA[Tipo Evento ID:]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement x="150" y="25" width="200" height="20"/>
+                <textFieldExpression><![CDATA[$F{tipoEventoId}]]></textFieldExpression>
+            </textField>
+
+            <!-- Fecha -->
+            <staticText>
+                <reportElement x="0" y="50" width="150" height="20"/>
+                <text><![CDATA[Fecha Registro:]]></text>
+            </staticText>
+
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement x="150" y="50" width="200" height="20"/>
+                <textFieldExpression><![CDATA[$F{fechaRegistro}]]></textFieldExpression>
+            </textField>
+
+            <!-- Dirección -->
+            <staticText>
+                <reportElement x="0" y="75" width="150" height="20"/>
+                <text><![CDATA[Dirección:]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement x="150" y="75" width="350" height="20"/>
+                <textFieldExpression><![CDATA[$F{direccion}]]></textFieldExpression>
+            </textField>
+
+            <!-- Corregimiento -->
+            <staticText>
+                <reportElement x="0" y="100" width="150" height="20"/>
+                <text><![CDATA[Corregimiento:]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement x="150" y="100" width="350" height="20"/>
+                <textFieldExpression><![CDATA[$F{corregimiento}]]></textFieldExpression>
+            </textField>
+
+            <!-- Vereda -->
+            <staticText>
+                <reportElement x="0" y="125" width="150" height="20"/>
+                <text><![CDATA[Vereda / Barrio:]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement x="150" y="125" width="350" height="20"/>
+                <textFieldExpression><![CDATA[$F{veredaSectorBarrio}]]></textFieldExpression>
+            </textField>
+
+            <!-- Observaciones -->
+            <staticText>
+                <reportElement x="0" y="150" width="150" height="20"/>
+                <text><![CDATA[Observaciones:]]></text>
+            </staticText>
+
+            <textField textAdjust="StretchHeight">
+                <reportElement x="150" y="150" width="350" height="40"/>
+                <textFieldExpression><![CDATA[$F{observaciones}]]></textFieldExpression>
+            </textField>
+
+        </band>
+        <subreport>
+            <reportElement x="0" y="220" width="555" height="100"/>
+            <dataSourceExpression>
+                <![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{integrantes})]]>
+            </dataSourceExpression>
+            <subreportExpression>
+                <![CDATA[$P{SUBREPORT_DIR} + "sub_integrantes.jasper"]]>
+            </subreportExpression>
+        </subreport>
+
+        <subreport>
+            <reportElement x="0" y="330" width="555" height="100"/>
+            <dataSourceExpression>
+                <![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{bienesAfectados})]]>
+            </dataSourceExpression>
+            <subreportExpression>
+                <![CDATA[$P{SUBREPORT_DIR} + "sub_bienes.jasper"]]>
+            </subreportExpression>
+        </subreport>
+
+        <subreport>
+            <reportElement x="0" y="440" width="555" height="100"/>
+            <dataSourceExpression>
+                <![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource($F{activosAgropecuarios})]]>
+            </dataSourceExpression>
+            <subreportExpression>
+                <![CDATA[$P{SUBREPORT_DIR} + "sub_activos.jasper"]]>
+            </subreportExpression>
+        </subreport>
+
+    </detail>
+
+</jasperReport>
