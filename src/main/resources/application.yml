@@ -1,38 +1,38 @@
 server:
-  port: 8080 # Puerto por defecto para ms-rufe
+  port: 8080
 
 spring:
   application:
     name: ms-rufe
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/rufe # ¡Asegúrate de que esta base de datos exista!
-    username: postgres # Tu usuario de PostgreSQL
-    password: Sa123456 # Tu contraseña de PostgreSQL
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
-  # No necesitamos jpa.hibernate.ddl-auto: update ya que no usamos JPA
-  # Si quieres ver las queries de JdbcTemplate, sube el nivel de log a TRACE para org.springframework.jdbc
+
   transaction:
-    rollback-on-error: true # Asegura que las transacciones hagan rollback en caso de error
+    rollback-on-error: true
 
 springdoc:
   swagger-ui:
-    path: /swagger-ui.html # URL para acceder a la documentación de Swagger UI
+    path: /swagger-ui.html
   api-docs:
-    path: /v3/api-docs # URL para el archivo OpenAPI
-  packages-to-scan: co.rufe.rufe # Escanea tus controladores para la documentación
+    path: /v3/api-docs
+  packages-to-scan: co.rufe.rufe
 
 application:
   jwt:
-    secret: 1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D9E0F1A2B # ¡CAMBIA ESTO EN PRODUCCIÓN! Debe ser una cadena larga y segura.
-    expiration: 86400000 # 24 horas en milisegundos (24 * 60 * 60 * 1000)
+    secret: ${JWT_SECRET}
+    expiration: ${JWT_EXPIRATION}
 
 logging:
   level:
-    com.rufe: INFO # Nivel de log para tus clases
-    org.springframework: WARN # Menos verboso para Spring
-    org.springframework.jdbc.core: DEBUG # Para ver detalles de las operaciones de JdbcTemplate
-    org.springframework.security: DEBUG # Para ver detalles de Spring Security
+    com.rufe: INFO
+    org.springframework: WARN
+    org.springframework.jdbc.core: DEBUG
+    org.springframework.security: DEBUG
 
 app:
   dataloader:
-    enabled: false
+    enabled: ${APP_DATALOADER_ENABLED:false}
