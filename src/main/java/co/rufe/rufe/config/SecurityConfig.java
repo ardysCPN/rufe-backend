@@ -17,12 +17,19 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.beans.factory.annotation.Value;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.access.AccessDeniedHandler; // Importar
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity // Habilita la seguridad a nivel de método con @PreAuthorize, @PostAuthorize, etc.
+@EnableMethodSecurity // Habilita la seguridad a nivel de método con @PreAuthorize, @PostAuthorize,
+                      // etc.
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
@@ -31,11 +38,14 @@ public class SecurityConfig {
     private final AccessDeniedHandler customAccessDeniedHandler; // Inyectar
     private final TenantContextCleanupFilter tenantContextCleanupFilter; // Inyectar
 
+    @Value("${app.cors.allowed-origins:*}")
+    private String allowedOrigins;
+
     public SecurityConfig(CustomUserDetailsService customUserDetailsService,
-                          JwtAuthenticationFilter jwtAuthenticationFilter,
-                          CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
-                          AccessDeniedHandler customAccessDeniedHandler,
-                          TenantContextCleanupFilter tenantContextCleanupFilter) { // Modifica el constructor
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+            AccessDeniedHandler customAccessDeniedHandler,
+            TenantContextCleanupFilter tenantContextCleanupFilter) { // Modifica el constructor
         this.customUserDetailsService = customUserDetailsService;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
@@ -59,29 +69,46 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable) // Deshabilitar CSRF para APIs REST con JWT
-            .exceptionHandling(exceptions -> exceptions
-                .authenticationEntryPoint(customAuthenticationEntryPoint) // Manejo de errores de autenticación
-                .accessDeniedHandler(customAccessDeniedHandler) // Manejo de errores de autorización (403)
-            )
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Sesiones sin estado para JWT
-            )
-            .authorizeHttpRequests(authorize -> authorize
-                // Permitir acceso sin autenticación a /auth/** (login, registro)
-                .requestMatchers("/auth/**").permitAll()
-                // Permitir acceso a Swagger UI y OpenAPI docs
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                // Otras rutas públicas si las hay
-                // .requestMatchers("/public/**").permitAll()
-                // Todas las demás solicitudes requieren autenticación
-                .anyRequest().authenticated()
-            );
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable) // Deshabilitar CSRF para APIs REST con JWT
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(customAuthenticationEntryPoint) // Manejo de errores de autenticación
+                        .accessDeniedHandler(customAccessDeniedHandler) // Manejo de errores de autorización (403)
+                )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Sesiones sin estado para JWT
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        // Permitir acceso sin autenticación a /auth/** (login, registro)
+                        .requestMatchers("/auth/**").permitAll()
+                        // Permitir acceso a Swagger UI y OpenAPI docs
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        // Otras rutas públicas si las hay
+                        // .requestMatchers("/public/**").permitAll()
+                        // Todas las demás solicitudes requieren autenticación
+                        .anyRequest().authenticated());
 
-        // Añadir el filtro JWT antes del filtro de autenticación de usuario y contraseña de Spring Security
+        // Añadir el filtro JWT antes del filtro de autenticación de usuario y
+        // contraseña de Spring Security
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterAfter(tenantContextCleanupFilter, JwtAuthenticationFilter.class); // Añade esto
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        List<String> origins = Arrays.asList(allowedOrigins.split(","));
+        configuration.setAllowedOrigins(origins);
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With", "Accept",
+                "Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers", "X-Tenant-ID"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Disposition"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
