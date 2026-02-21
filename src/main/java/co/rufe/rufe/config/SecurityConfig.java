@@ -83,8 +83,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         // Permitir acceso a Swagger UI y OpenAPI docs
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        // Otras rutas públicas si las hay
-                        // .requestMatchers("/public/**").permitAll()
+                        // Permitir la ruta de error para depuración
+                        .requestMatchers("/error").permitAll()
                         // Todas las demás solicitudes requieren autenticación
                         .anyRequest().authenticated());
 
