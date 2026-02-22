@@ -29,7 +29,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
     private final IOrganizacionDao organizacionDao;
     private final PasswordHasher passwordHasher;
 
-    public UsuarioServiceImpl(IUsuarioDao usuarioDao, IRolDao rolDao, IOrganizacionDao organizacionDao, PasswordHasher passwordHasher) {
+    public UsuarioServiceImpl(IUsuarioDao usuarioDao, IRolDao rolDao, IOrganizacionDao organizacionDao,
+            PasswordHasher passwordHasher) {
         this.usuarioDao = usuarioDao;
         this.rolDao = rolDao;
         this.organizacionDao = organizacionDao;
@@ -52,14 +53,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
         }
         rolDao.findById(request.getRolId()).ifPresent(rol -> {
             if (!rol.getOrganizacionId().equals(organizacionId)) {
-                throw new IllegalArgumentException("El rol con ID " + request.getRolId() + " no pertenece a la organización con ID " + organizacionId + ".");
+                throw new IllegalArgumentException("El rol con ID " + request.getRolId()
+                        + " no pertenece a la organización con ID " + organizacionId + ".");
             }
         });
 
-
         // 3. Validar que el email no exista dentro de la misma organización
         if (usuarioDao.existsByOrganizacionIdAndEmail(organizacionId, request.getEmail())) {
-            throw new DuplicateResourceException("Ya existe un usuario con el email '" + request.getEmail() + "' en la organización con ID: " + organizacionId);
+            throw new DuplicateResourceException("Ya existe un usuario con el email '" + request.getEmail()
+                    + "' en la organización con ID: " + organizacionId);
         }
 
         Usuario usuario = UsuarioMapper.toModel(request);
@@ -72,7 +74,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
             return UsuarioMapper.toResponse(savedUsuario);
         } catch (DataIntegrityViolationException e) {
             log.error("Error de integridad al crear usuario para org ID {}: {}", organizacionId, e.getMessage(), e);
-            throw new IllegalArgumentException("Error al crear el usuario. Verifique los datos (email, rol) e intente de nuevo.");
+            throw new IllegalArgumentException(
+                    "Error al crear el usuario. Verifique los datos (email, rol) e intente de nuevo.");
         }
     }
 
@@ -87,12 +90,14 @@ public class UsuarioServiceImpl implements IUsuarioService {
     @Override
     public UsuarioResponse getUsuarioByEmailAndOrganizacionId(Long organizacionId, String email) {
         log.debug("Buscando usuario con email '{}' en organización ID: {}", email, organizacionId);
-        // Validar que la organización exista, aunque el DAO ya lo validará implícitamente
+        // Validar que la organización exista, aunque el DAO ya lo validará
+        // implícitamente
         if (!organizacionDao.existsById(organizacionId)) {
-             throw new ResourceNotFoundException("Organización no encontrada con ID: " + organizacionId);
+            throw new ResourceNotFoundException("Organización no encontrada con ID: " + organizacionId);
         }
         Usuario usuario = usuarioDao.findByOrganizacionIdAndEmail(organizacionId, email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario con email '" + email + "' no encontrado para la organización ID: " + organizacionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Usuario con email '" + email + "' no encontrado para la organización ID: " + organizacionId));
         return UsuarioMapper.toResponse(usuario);
     }
 
@@ -102,7 +107,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
         if (!organizacionDao.existsById(organizacionId)) {
             throw new ResourceNotFoundException("Organización no encontrada con ID: " + organizacionId);
         }
-        return usuarioDao.findByOrganizacionId(organizacionId).stream()
+        return usuarioDao.findByOrganizacionIdWithDetails(organizacionId).stream()
                 .map(UsuarioMapper::toResponse)
                 .collect(Collectors.toList());
     }
@@ -117,7 +122,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
         // Asegurarse de que el usuario pertenece a la organización correcta
         if (!existingUsuario.getOrganizacionId().equals(organizacionId)) {
-            throw new AuthorizationException("El usuario con ID " + id + " no pertenece a la organización ID " + organizacionId + ".");
+            throw new AuthorizationException(
+                    "El usuario con ID " + id + " no pertenece a la organización ID " + organizacionId + ".");
         }
 
         // Validar que el nuevo rol exista y pertenezca a la misma organización
@@ -126,14 +132,17 @@ public class UsuarioServiceImpl implements IUsuarioService {
         }
         rolDao.findById(request.getRolId()).ifPresent(rol -> {
             if (!rol.getOrganizacionId().equals(organizacionId)) {
-                throw new IllegalArgumentException("El rol con ID " + request.getRolId() + " no pertenece a la organización con ID " + organizacionId + ".");
+                throw new IllegalArgumentException("El rol con ID " + request.getRolId()
+                        + " no pertenece a la organización con ID " + organizacionId + ".");
             }
         });
 
-        // Verificar si el nuevo email ya existe para esta organización (y no es el mismo usuario)
+        // Verificar si el nuevo email ya existe para esta organización (y no es el
+        // mismo usuario)
         if (!existingUsuario.getEmail().equals(request.getEmail()) &&
                 usuarioDao.existsByOrganizacionIdAndEmail(organizacionId, request.getEmail())) {
-            throw new DuplicateResourceException("Ya existe otro usuario con el email '" + request.getEmail() + "' en la organización con ID: " + organizacionId);
+            throw new DuplicateResourceException("Ya existe otro usuario con el email '" + request.getEmail()
+                    + "' en la organización con ID: " + organizacionId);
         }
 
         existingUsuario.setNombreCompleto(request.getNombreCompleto());
@@ -153,7 +162,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
             return UsuarioMapper.toResponse(updatedUsuario);
         } catch (DataIntegrityViolationException e) {
             log.error("Error de integridad al actualizar usuario con ID {}: {}", id, e.getMessage(), e);
-            throw new IllegalArgumentException("Error al actualizar el usuario. Verifique los datos (email, rol) e intente de nuevo.");
+            throw new IllegalArgumentException(
+                    "Error al actualizar el usuario. Verifique los datos (email, rol) e intente de nuevo.");
         }
     }
 
@@ -167,7 +177,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
         // Asegurarse de que el usuario pertenece a la organización correcta
         if (!existingUsuario.getOrganizacionId().equals(organizacionId)) {
-            throw new AuthorizationException("El usuario con ID " + id + " no pertenece a la organización ID " + organizacionId + ".");
+            throw new AuthorizationException(
+                    "El usuario con ID " + id + " no pertenece a la organización ID " + organizacionId + ".");
         }
 
         boolean deleted = usuarioDao.deleteById(id); // Este deleteById ya valida el tenant
@@ -185,7 +196,8 @@ public class UsuarioServiceImpl implements IUsuarioService {
             throw new ResourceNotFoundException("Organización no encontrada con ID: " + organizacionId);
         }
         Usuario usuario = usuarioDao.findByOrganizacionIdAndEmail(organizacionId, email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario con email '" + email + "' no encontrado para la organización ID: " + organizacionId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Usuario con email '" + email + "' no encontrado para la organización ID: " + organizacionId));
         return UsuarioMapper.toResponse(usuario);
     }
 }

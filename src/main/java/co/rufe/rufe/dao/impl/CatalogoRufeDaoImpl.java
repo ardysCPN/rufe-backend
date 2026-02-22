@@ -32,7 +32,8 @@ public class CatalogoRufeDaoImpl implements ICatalogoRufeDao {
     public Optional<TipoUbicacionBien> findTipoUbicacionBienById(Integer id) {
         String sql = "SELECT id, nombre FROM tipo_ubicacion_bien WHERE id = ?";
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.TIPO_UBICACION_BIEN_ROW_MAPPER, id));
+            return Optional
+                    .ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.TIPO_UBICACION_BIEN_ROW_MAPPER, id));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -49,7 +50,8 @@ public class CatalogoRufeDaoImpl implements ICatalogoRufeDao {
     public Optional<TipoAlojamientoActual> findTipoAlojamientoActualById(Integer id) {
         String sql = "SELECT id, nombre FROM tipo_alojamiento_actual WHERE id = ?";
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.TIPO_ALOJAMIENTO_ACTUAL_ROW_MAPPER, id));
+            return Optional.ofNullable(
+                    jdbcTemplate.queryForObject(sql, CustomRowMappers.TIPO_ALOJAMIENTO_ACTUAL_ROW_MAPPER, id));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -66,7 +68,8 @@ public class CatalogoRufeDaoImpl implements ICatalogoRufeDao {
     public Optional<FormaTenenciaBien> findFormaTenenciaBienById(Integer id) {
         String sql = "SELECT id, nombre FROM forma_tenencia_bien WHERE id = ?";
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.FORMA_TENENCIA_BIEN_ROW_MAPPER, id));
+            return Optional
+                    .ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.FORMA_TENENCIA_BIEN_ROW_MAPPER, id));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -117,7 +120,8 @@ public class CatalogoRufeDaoImpl implements ICatalogoRufeDao {
     public Optional<TipoDocumento> findTipoDocumentoById(Integer id) {
         String sql = "SELECT id, nombre FROM tipo_documento WHERE id = ?";
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.TIPO_DOCUMENTO_ROW_MAPPER, id));
+            return Optional
+                    .ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.TIPO_DOCUMENTO_ROW_MAPPER, id));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -168,7 +172,8 @@ public class CatalogoRufeDaoImpl implements ICatalogoRufeDao {
     public Optional<PertenenciaEtnica> findPertenenciaEtnicaById(Integer id) {
         String sql = "SELECT id, nombre FROM pertenencia_etnica WHERE id = ?";
         try {
-            return Optional.ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.PERTENENCIA_ETNICA_ROW_MAPPER, id));
+            return Optional
+                    .ofNullable(jdbcTemplate.queryForObject(sql, CustomRowMappers.PERTENENCIA_ETNICA_ROW_MAPPER, id));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -190,5 +195,26 @@ public class CatalogoRufeDaoImpl implements ICatalogoRufeDao {
     public List<Evento> findAllEventos() {
         String sql = "SELECT id, nombre FROM evento ORDER BY nombre";
         return jdbcTemplate.query(sql, CustomRowMappers.EVENTO_ROW_MAPPER);
+    }
+
+    @Override
+    public void create(String tableName, String nombre) {
+        log.info("Creando item en tabla {}: {}", tableName, nombre);
+        String sql = String.format("INSERT INTO %s (nombre) VALUES (?)", tableName);
+        jdbcTemplate.update(sql, nombre);
+    }
+
+    @Override
+    public void update(String tableName, Integer id, String nombre) {
+        log.info("Actualizando item en tabla {} ID {}: {}", tableName, id, nombre);
+        String sql = String.format("UPDATE %s SET nombre = ? WHERE id = ?", tableName);
+        jdbcTemplate.update(sql, nombre, id);
+    }
+
+    @Override
+    public void delete(String tableName, Integer id) {
+        log.info("Eliminando item en tabla {} ID {}", tableName, id);
+        String sql = String.format("DELETE FROM %s WHERE id = ?", tableName);
+        jdbcTemplate.update(sql, id);
     }
 }

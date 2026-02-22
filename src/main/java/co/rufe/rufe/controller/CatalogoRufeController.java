@@ -7,10 +7,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import co.rufe.rufe.dto.catalogo.CatalogoItemRequest;
 import co.rufe.rufe.dto.catalogo.CatalogoItemResponse;
 import co.rufe.rufe.dto.catalogo.CatalogoMunicipioResponse;
 import co.rufe.rufe.service.ICatalogoRufeService;
@@ -25,6 +30,33 @@ public class CatalogoRufeController {
 
     public CatalogoRufeController(ICatalogoRufeService catalogoRufeService) {
         this.catalogoRufeService = catalogoRufeService;
+    }
+
+    // --- Endpoints para CRUD genérico ---
+
+    @PostMapping("/{catalogo}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN_GLOBAL') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> createItem(@PathVariable String catalogo, @RequestBody CatalogoItemRequest request) {
+        log.info("Solicitud para crear item en catálogo {}: {}", catalogo, request.getNombre());
+        catalogoRufeService.createItem(catalogo, request.getNombre());
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{catalogo}/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN_GLOBAL') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> updateItem(@PathVariable String catalogo, @PathVariable Integer id,
+            @RequestBody CatalogoItemRequest request) {
+        log.info("Solicitud para actualizar item en catálogo {} con ID {}: {}", catalogo, id, request.getNombre());
+        catalogoRufeService.updateItem(catalogo, id, request.getNombre());
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{catalogo}/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN_GLOBAL') or hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<Void> deleteItem(@PathVariable String catalogo, @PathVariable Integer id) {
+        log.info("Solicitud para eliminar item en catálogo {} con ID {}", catalogo, id);
+        catalogoRufeService.deleteItem(catalogo, id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     // Endpoint para TipoUbicacionBien
@@ -42,7 +74,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener TipoUbicacionBien con ID: {}", id);
         return catalogoRufeService.getTipoUbicacionBienById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TipoUbicacionBien no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "TipoUbicacionBien no encontrado con ID: " + id));
     }
 
     // Endpoint para TipoAlojamientoActual
@@ -60,7 +93,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener TipoAlojamientoActual con ID: {}", id);
         return catalogoRufeService.getTipoAlojamientoActualById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TipoAlojamientoActual no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "TipoAlojamientoActual no encontrado con ID: " + id));
     }
 
     // Endpoint para FormaTenenciaBien
@@ -78,7 +112,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener FormaTenenciaBien con ID: {}", id);
         return catalogoRufeService.getFormaTenenciaBienById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FormaTenenciaBien no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "FormaTenenciaBien no encontrado con ID: " + id));
     }
 
     // Endpoint para EstadoBien
@@ -96,7 +131,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener EstadoBien con ID: {}", id);
         return catalogoRufeService.getEstadoBienById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "EstadoBien no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "EstadoBien no encontrado con ID: " + id));
     }
 
     // Endpoint para TipoBien
@@ -114,7 +150,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener TipoBien con ID: {}", id);
         return catalogoRufeService.getTipoBienById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TipoBien no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "TipoBien no encontrado con ID: " + id));
     }
 
     // Endpoint para TipoDocumento
@@ -132,7 +169,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener TipoDocumento con ID: {}", id);
         return catalogoRufeService.getTipoDocumentoById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "TipoDocumento no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "TipoDocumento no encontrado con ID: " + id));
     }
 
     // Endpoint para Parentesco
@@ -150,7 +188,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener Parentesco con ID: {}", id);
         return catalogoRufeService.getParentescoById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parentesco no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Parentesco no encontrado con ID: " + id));
     }
 
     // Endpoint para Genero
@@ -168,7 +207,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener Genero con ID: {}", id);
         return catalogoRufeService.getGeneroById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Genero no encontrado con ID: " + id));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Genero no encontrado con ID: " + id));
     }
 
     // Endpoint para PertenenciaEtnica
@@ -186,7 +226,8 @@ public class CatalogoRufeController {
         log.info("Solicitud para obtener PertenenciaEtnica con ID: {}", id);
         return catalogoRufeService.getPertenenciaEtnicaById(id)
                 .map(item -> new ResponseEntity<>(item, HttpStatus.OK))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "PertenenciaEtnica no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "PertenenciaEtnica no encontrado con ID: " + id));
     }
 
     // Nuevos endpoints para departamentos, municipios y eventos

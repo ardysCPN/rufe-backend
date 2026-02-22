@@ -111,6 +111,19 @@ public class UsuarioDaoImpl implements IUsuarioDao {
     }
 
     @Override
+    public List<UsuarioWithDetails> findByOrganizacionIdWithDetails(Long organizacionId) {
+        String sql = "SELECT u.id, u.organizacion_id, o.nombre_organizacion, o.activa as organizacion_activa, " +
+                "u.rol_id, r.nombre_rol, u.nombre_completo, u.email, u.password_hash, u.activo, " +
+                "u.fecha_creacion, u.fecha_actualizacion " +
+                "FROM usuarios u " +
+                "JOIN roles r ON u.rol_id = r.id " +
+                "JOIN organizaciones o ON u.organizacion_id = o.id " +
+                "WHERE u.organizacion_id = :organizacionId ORDER BY u.nombre_completo";
+        MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
+        return namedParameterJdbcTemplate.query(sql, params, CustomRowMappers.USUARIO_WITH_DETAILS_ROW_MAPPER);
+    }
+
+    @Override
     public Usuario update(Usuario usuario) {
         String sql = "UPDATE usuarios SET rol_id = :rolId, nombre_completo = :nombreCompleto, " +
                 "email = :email, password_hash = :passwordHash, activo = :activo, fecha_actualizacion = NOW() " +

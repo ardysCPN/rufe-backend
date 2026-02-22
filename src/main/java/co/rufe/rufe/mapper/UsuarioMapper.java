@@ -1,6 +1,5 @@
 package co.rufe.rufe.mapper;
 
-
 import co.rufe.rufe.dto.usuario.UsuarioRequest;
 import co.rufe.rufe.dto.usuario.UsuarioResponse;
 import co.rufe.rufe.model.Usuario;
@@ -34,6 +33,23 @@ public class UsuarioMapper {
         response.setActivo(usuario.getActivo());
         response.setFechaCreacion(usuario.getFechaCreacion());
         response.setFechaActualizacion(usuario.getFechaActualizacion());
+        return response;
+    }
+
+    public static UsuarioResponse toResponse(co.rufe.rufe.model.UsuarioWithDetails details) {
+        if (details == null) {
+            return null;
+        }
+        UsuarioResponse response = new UsuarioResponse();
+        response.setId(details.getId());
+        response.setOrganizacionId(details.getOrganizacionId());
+        response.setRolId(details.getRolId());
+        response.setRolNombre(details.getRolNombre());
+        response.setNombreCompleto(details.getNombreCompleto());
+        response.setEmail(details.getEmail());
+        response.setActivo(details.getActivo());
+        response.setFechaCreacion(details.getFechaCreacion());
+        response.setFechaActualizacion(details.getFechaActualizacion());
         return response;
     }
 }

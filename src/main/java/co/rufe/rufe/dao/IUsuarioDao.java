@@ -19,6 +19,8 @@ public interface IUsuarioDao {
 
     List<Usuario> findByOrganizacionId(Long organizacionId);
 
+    List<UsuarioWithDetails> findByOrganizacionIdWithDetails(Long organizacionId);
+
     Usuario update(Usuario usuario);
 
     boolean deleteById(Long id);

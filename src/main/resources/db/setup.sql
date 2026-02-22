@@ -229,6 +229,20 @@ CREATE TABLE public.menu_roles (
 	CONSTRAINT menu_roles_rol_id_fkey FOREIGN KEY (rol_id) REFERENCES public.roles(id)
 );
 
+-- public.audit_log definition
+CREATE TABLE public.audit_log (
+	id bigserial NOT NULL,
+	organizacion_id int8 NOT NULL,
+	usuario_id int8 NULL,
+	accion varchar(100) NOT NULL,
+	recurso varchar(100) NOT NULL,
+	detalle text NULL,
+	ip_address varchar(45) NULL,
+	fecha_creacion timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT audit_log_pkey PRIMARY KEY (id),
+	CONSTRAINT audit_log_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
+);
+
 -- public.registros_rufe definition
 CREATE TABLE public.registros_rufe (
 	id bigserial NOT NULL,

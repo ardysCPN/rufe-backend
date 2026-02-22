@@ -67,16 +67,16 @@ public class CatalogoRufeServiceImpl implements ICatalogoRufeService {
         } else if (model instanceof PertenenciaEtnica) {
             PertenenciaEtnica item = (PertenenciaEtnica) model;
             return CatalogoItemResponse.builder().id(item.getId()).nombre(item.getNombre()).build();
-        }else if (model instanceof Departamento) {
+        } else if (model instanceof Departamento) {
             Departamento item = (Departamento) model;
-            return CatalogoItemResponse.builder().id(item.getId()).nombre(item.getNombre()).build();            
-        }else if (model instanceof Municipio) {
+            return CatalogoItemResponse.builder().id(item.getId()).nombre(item.getNombre()).build();
+        } else if (model instanceof Municipio) {
             Municipio item = (Municipio) model;
             return CatalogoItemResponse.builder().id(item.getId()).nombre(item.getNombre()).build();
-        }else if (model instanceof Evento) {
+        } else if (model instanceof Evento) {
             Evento item = (Evento) model;
             return CatalogoItemResponse.builder().id(item.getId()).nombre(item.getNombre()).build();
-        } 
+        }
         log.warn("Tipo de modelo de catálogo no reconocido: {}", model.getClass().getName());
         return null;
     }
@@ -207,9 +207,9 @@ public class CatalogoRufeServiceImpl implements ICatalogoRufeService {
                 .map(this::mapToResponse);
     }
 
-
     private CatalogoMunicipioResponse mapToMunicipioResponse(Municipio model) {
-        if (model == null) return null;
+        if (model == null)
+            return null;
         return CatalogoMunicipioResponse.builder()
                 .id(model.getId())
                 .nombre(model.getNombre())
@@ -236,5 +236,51 @@ public class CatalogoRufeServiceImpl implements ICatalogoRufeService {
         return catalogoRufeDao.findAllEventos().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    private String getTableName(String catalogo) {
+        switch (catalogo) {
+            case "tipo-ubicacion-bien":
+                return "tipo_ubicacion_bien";
+            case "tipo-alojamiento-actual":
+                return "tipo_alojamiento_actual";
+            case "forma-tenencia-bien":
+                return "forma_tenencia_bien";
+            case "estado-bien":
+                return "estado_bien";
+            case "tipo-bien":
+                return "tipo_bien";
+            case "tipo-documento":
+                return "tipo_documento";
+            case "parentesco":
+                return "parentesco";
+            case "genero":
+                return "genero";
+            case "pertenencia-etnica":
+                return "pertenencia_etnica";
+            case "departamento":
+                return "departamento";
+            case "municipio":
+                return "municipio";
+            case "evento":
+                return "evento";
+            default:
+                throw new IllegalArgumentException("Catálogo no reconocido: " + catalogo);
+        }
+    }
+
+    @Override
+    public void createItem(String catalogo, String nombre) {
+        catalogoRufeDao.create(getTableName(catalogo), nombre);
+    }
+
+    @Override
+    public void updateItem(String catalogo, Integer id, String nombre) {
+        catalogoRufeDao.update(getTableName(catalogo), id, nombre);
+    }
+
+    @Override
+    public void deleteItem(String catalogo, Integer id) {
+        catalogoRufeDao.delete(getTableName(catalogo), id);
     }
 }

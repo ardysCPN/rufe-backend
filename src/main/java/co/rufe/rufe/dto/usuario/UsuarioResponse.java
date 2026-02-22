@@ -18,6 +18,9 @@ public class UsuarioResponse {
     @Schema(description = "ID del rol asignado al usuario", example = "101")
     private Long rolId;
 
+    @Schema(description = "Nombre del rol asignado al usuario", example = "ADMIN_GLOBAL")
+    private String rolNombre;
+
     @Schema(description = "Nombre completo del usuario", example = "Juan Pérez Gómez")
     private String nombreCompleto;
 
