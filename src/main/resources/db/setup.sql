@@ -130,6 +130,16 @@ CREATE TABLE public.tipo_ubicacion_bien (
 	CONSTRAINT tipo_ubicacion_bien_pkey PRIMARY KEY (id)
 );
 
+-- public.permisos definition
+CREATE TABLE public.permisos (
+	id serial4 NOT NULL,
+	nombre_permiso varchar(100) NOT NULL,
+	descripcion text NULL,
+	recurso varchar(100) NULL,
+	CONSTRAINT permisos_nombre_permiso_key UNIQUE (nombre_permiso),
+	CONSTRAINT permisos_pkey PRIMARY KEY (id)
+);
+
 -- public.eventos definition
 CREATE TABLE public.eventos (
 	id bigserial NOT NULL,
@@ -174,6 +184,16 @@ CREATE TABLE public.roles (
 	CONSTRAINT roles_organizacion_id_nombre_rol_key UNIQUE (organizacion_id, nombre_rol),
 	CONSTRAINT roles_pkey PRIMARY KEY (id),
 	CONSTRAINT roles_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
+);
+
+-- public.rol_permisos definition
+CREATE TABLE public.rol_permisos (
+	id bigserial NOT NULL,
+	rol_id int8 NOT NULL,
+	permiso_id int4 NOT NULL,
+	CONSTRAINT rol_permisos_pkey PRIMARY KEY (id),
+	CONSTRAINT rol_permisos_permiso_id_fkey FOREIGN KEY (permiso_id) REFERENCES public.permisos(id),
+	CONSTRAINT rol_permisos_rol_id_fkey FOREIGN KEY (rol_id) REFERENCES public.roles(id)
 );
 
 -- public.usuarios definition
@@ -399,26 +419,59 @@ $$;
 
 -- ==================== 4. Security & Menus ====================
 
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (NULL, 1, '/dashboard', 'Dashboard', 'dashboard', 10, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (NULL, 1, '/rufe/list', 'Registros RUFE', 'description', 20, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (NULL, 1, NULL, 'Administración', 'admin_panel_settings', 100, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (NULL, 1, NULL, 'Herramientas', 'build', 110, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (NULL, 1, '/events/list', 'Eventos', 'event', 15, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (NULL, 1, '/reports/dashboard', 'Reportes', 'analytics', 30, now());
--- Submenus
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (2, 2, '/rufe/new', 'Crear Nuevo Registro', 'add_circle', 21, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (2, 2, '/rufe/list', 'Ver Todos los Registros', 'view_list', 22, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (4, 2, '/admin/users', 'Gestión de Usuarios', 'group', 101, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (4, 2, '/admin/roles', 'Gestión de Roles', 'manage_accounts', 102, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (4, 2, '/admin/organizations', 'Organizaciones', 'corporate_fare', 103, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (4, 2, '/admin/catalogs', 'Configuración de Catálogos', 'list_alt', 104, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (4, 2, '/admin/audit', 'Logs de Auditoría', 'history', 105, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (8, 2, '/tools/sub', 'Herramientas sub', 'panel_settings', 111, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (8, 2, '/tools/sync-status', 'Estado de Sincronización', 'sync', 112, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (10, 2, '/events/new', 'Configurar Evento', 'event_available', 16, now());
-INSERT INTO public.menu (id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES (14, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, now());
+-- Root Menus
+INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES 
+(1, NULL, 1, '/dashboard', 'Dashboard', 'dashboard', 10, now()),
+(2, NULL, 1, '/rufe/list', 'Registros RUFE', 'description', 20, now()),
+(3, NULL, 1, NULL, 'Administración', 'admin_panel_settings', 100, now()),
+(4, NULL, 1, NULL, 'Herramientas', 'build', 110, now()),
+(5, NULL, 1, '/events/list', 'Eventos', 'event', 15, now()),
+(6, NULL, 1, '/reports/dashboard', 'Reportes', 'analytics', 30, now());
+
+-- Submenus (linking to IDs above)
+INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES 
+(7, 2, 2, '/rufe/new', 'Crear Nuevo Registro', 'add_circle', 21, now()),
+(8, 2, 2, '/rufe/list', 'Ver Todos los Registros', 'view_list', 22, now()),
+(9, 3, 2, '/admin/users', 'Gestión de Usuarios', 'group', 101, now()),
+(10, 3, 2, '/admin/roles', 'Gestión de Roles', 'manage_accounts', 102, now()),
+(11, 3, 2, '/admin/organizations', 'Organizaciones', 'corporate_fare', 103, now()),
+(12, 3, 2, '/admin/catalogs', 'Configuración de Catálogos', 'list_alt', 104, now()),
+(13, 3, 2, '/admin/audit', 'Logs de Auditoría', 'history', 105, now()),
+(14, 4, 2, '/tools/sub', 'Herramientas sub', 'panel_settings', 111, now()),
+(15, 4, 2, '/tools/sync-status', 'Estado de Sincronización', 'sync', 112, now()),
+(16, 5, 2, '/events/new', 'Configurar Evento', 'event_available', 16, now()),
+(17, 6, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, now());
+
+-- Reset the sequence
+SELECT setval('menu_id_seq', 17);
 
 -- Master Data
+INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES 
+('organizaciones:crear', 'Permite crear nuevas organizaciones', 'Organizaciones'),
+('organizaciones:leer', 'Permite ver la lista de organizaciones y sus detalles', 'Organizaciones'),
+('organizaciones:actualizar', 'Permite modificar organizaciones existentes', 'Organizaciones'),
+('organizaciones:eliminar', 'Permite eliminar organizaciones', 'Organizaciones'),
+('roles:crear', 'Permite crear nuevos roles dentro de una organización', 'Roles'),
+('roles:leer', 'Permite ver la lista de roles y sus detalles', 'Roles'),
+('roles:actualizar', 'Permite modificar roles existentes', 'Roles'),
+('roles:eliminar', 'Permite eliminar roles', 'Roles'),
+('roles:asignar_permisos', 'Permite asignar y revocar permisos a un rol', 'Roles'),
+('usuarios:crear', 'Permite crear nuevos usuarios en la organización', 'Usuarios'),
+('usuarios:leer', 'Permite ver la lista de usuarios y sus detalles', 'Usuarios'),
+('usuarios:actualizar', 'Permite modificar usuarios existentes', 'Usuarios'),
+('usuarios:eliminar', 'Permite eliminar usuarios', 'Usuarios'),
+('menu:crear', 'Permite crear nuevos ítems de menú', 'Menu'),
+('menu:leer', 'Permite leer la estructura del menú', 'Menu'),
+('menu:actualizar', 'Permite modificar ítems de menú existentes', 'Menu'),
+('menu:eliminar', 'Permite eliminar ítems de menú', 'Menu'),
+('menu:asignar_permisos', 'Permite asignar y revocar permisos a ítems de menú', 'Menu');
+
 INSERT INTO public.organizaciones (nombre_organizacion, activa, fecha_creacion, fecha_actualizacion) VALUES ('GlobalCorp', true, now(), now());
 INSERT INTO public.roles (organizacion_id, nombre_rol, descripcion, fecha_creacion) VALUES (1, 'ADMIN_GLOBAL', 'Administrador global del sistema con acceso a todas las organizaciones.', now());
 INSERT INTO public.usuarios (organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion) VALUES (1, 1, 'Admin Global Rufe', 'admin@global.com', '$2a$10$drg/AuoRyM7RubPcjupPieruaaR9V0VVEAe77bKAfrxfXhT2P2aT.', true, now(), now());
+
+-- Assign all permissions to ADMIN_GLOBAL (role_id 1)
+INSERT INTO public.rol_permisos (rol_id, permiso_id) SELECT 1, id FROM public.permisos;
+
+-- Assign all menus to ADMIN_GLOBAL (role_id 1)
+INSERT INTO public.menu_roles (menu_id, rol_id) SELECT id, 1 FROM public.menu;
