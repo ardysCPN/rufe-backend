@@ -37,7 +37,7 @@ logging:
 
 app:
   dataloader:
-    enabled: ${APP_DATALOADER_ENABLED:false}
+    enabled: ${APP_DATALOADER_ENABLED:true}
     force-reset: ${APP_DATALOADER_FORCE_RESET:false}
     i-am-sure: ${APP_DATALOADER_I_AM_SURE:false}
   cors:

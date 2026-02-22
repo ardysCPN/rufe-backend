@@ -8,10 +8,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.sql.DataSource;
+import org.springframework.util.FileCopyUtils;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Gestiona la carga inicial de datos y el reset del sistema.
@@ -24,9 +23,6 @@ public class DataLoader {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private DataSource dataSource;
 
     @Value("${app.dataloader.enabled:false}")
     private boolean enabled;
@@ -104,12 +100,21 @@ public class DataLoader {
     }
 
     private void executeSetupSql() {
-        log.info("MS-RUFE: Ejecutando 'db/setup.sql'...");
-        ResourceDatabasePopulator populator = new ResourceDatabasePopulator();
-        populator.addScript(new ClassPathResource("db/setup.sql"));
-        populator.setSqlScriptEncoding("UTF-8");
-        populator.setContinueOnError(false);
-        populator.execute(dataSource);
-        log.info("MS-RUFE: ¡Inicialización completada con éxito!");
+        log.info("MS-RUFE: Cargando y ejecutando 'db/setup.sql' como bloque único...");
+        try {
+            ClassPathResource resource = new ClassPathResource("db/setup.sql");
+            byte[] bdata = FileCopyUtils.copyToByteArray(resource.getInputStream());
+            String sql = new String(bdata, StandardCharsets.UTF_8);
+
+            // Ejecutamos todo el script de una vez.
+            // El driver de Postgres permite múltiples sentencias separadas por ; en un solo
+            // string.
+            jdbcTemplate.execute(sql);
+
+            log.info("MS-RUFE: ¡Inicialización completada con éxito!");
+        } catch (Exception e) {
+            log.error("MS-RUFE: Error crítico al ejecutar el script de bloque único: {}", e.getMessage(), e);
+            throw new RuntimeException("Fallo en la ejecución del script SQL de inicialización", e);
+        }
     }
 }
