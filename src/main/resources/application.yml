@@ -29,10 +29,11 @@ application:
 
 logging:
   level:
-    com.rufe: INFO
-    org.springframework: WARN
-    org.springframework.jdbc.core: DEBUG
+    com.rufe: DEBUG
+    org.springframework.web: DEBUG
     org.springframework.security: DEBUG
+    org.springframework.jdbc.core: DEBUG
+    org.apache.coyote: DEBUG
 
 app:
   dataloader:
