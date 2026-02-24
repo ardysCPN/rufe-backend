@@ -1,6 +1,5 @@
 package co.rufe.rufe.dao.impl;
 
-
 import co.rufe.rufe.dao.IOrganizacionDao;
 import co.rufe.rufe.exception.ResourceNotFoundException;
 import co.rufe.rufe.model.Organizacion;
@@ -31,30 +30,38 @@ public class OrganizacionDaoImpl implements IOrganizacionDao {
 
     @Override
     public Organizacion save(Organizacion organizacion) {
-        String sql = "INSERT INTO organizaciones (nombre_organizacion, activa, fecha_creacion, fecha_actualizacion) " +
-                     "VALUES (:nombreOrganizacion, :activa, NOW(), NOW())";
-        
+        String sql = "INSERT INTO organizaciones (nombre_organizacion, nit, direccion, telefono, activa, fecha_creacion, fecha_actualizacion) "
+                +
+                "VALUES (:nombreOrganizacion, :nit, :direccion, :telefono, :activa, NOW(), NOW())";
+
         KeyHolder keyHolder = new GeneratedKeyHolder();
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nombreOrganizacion", organizacion.getNombreOrganizacion());
+        params.addValue("nit", organizacion.getNit());
+        params.addValue("direccion", organizacion.getDireccion());
+        params.addValue("telefono", organizacion.getTelefono());
         params.addValue("activa", organizacion.getActiva() != null ? organizacion.getActiva() : true, Types.BOOLEAN);
 
-        namedParameterJdbcTemplate.update(sql, params, keyHolder, new String[]{"id"});
+        namedParameterJdbcTemplate.update(sql, params, keyHolder, new String[] { "id" });
 
         long newId = Objects.requireNonNull(keyHolder.getKey()).longValue();
         organizacion.setId(newId);
-        // La entidad en Java no tiene las fechas actualizadas al momento de la inserción,
-        // pero la BD sí las maneja. Para tener una entidad completa, se puede hacer un findById() aquí.
-        // Por simplicidad, solo seteamos el ID y asumimos que las fechas se manejarán en la BD.
+        // La entidad en Java no tiene las fechas actualizadas al momento de la
+        // inserción,
+        // pero la BD sí las maneja. Para tener una entidad completa, se puede hacer un
+        // findById() aquí.
+        // Por simplicidad, solo seteamos el ID y asumimos que las fechas se manejarán
+        // en la BD.
         return organizacion;
     }
 
     @Override
     public Optional<Organizacion> findById(Long id) {
-        String sql = "SELECT id, nombre_organizacion, activa, fecha_creacion, fecha_actualizacion FROM organizaciones WHERE id = :id";
+        String sql = "SELECT id, nombre_organizacion, nit, direccion, telefono, activa, fecha_creacion, fecha_actualizacion FROM organizaciones WHERE id = :id";
         MapSqlParameterSource params = new MapSqlParameterSource("id", id);
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.ORGANIZACION_ROW_MAPPER));
+            return Optional.ofNullable(
+                    namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.ORGANIZACION_ROW_MAPPER));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -62,10 +69,11 @@ public class OrganizacionDaoImpl implements IOrganizacionDao {
 
     @Override
     public Optional<Organizacion> findByNombreOrganizacion(String nombreOrganizacion) {
-        String sql = "SELECT id, nombre_organizacion, activa, fecha_creacion, fecha_actualizacion FROM organizaciones WHERE nombre_organizacion = :nombreOrganizacion";
+        String sql = "SELECT id, nombre_organizacion, nit, direccion, telefono, activa, fecha_creacion, fecha_actualizacion FROM organizaciones WHERE nombre_organizacion = :nombreOrganizacion";
         MapSqlParameterSource params = new MapSqlParameterSource("nombreOrganizacion", nombreOrganizacion);
         try {
-            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.ORGANIZACION_ROW_MAPPER));
+            return Optional.ofNullable(
+                    namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.ORGANIZACION_ROW_MAPPER));
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
@@ -73,15 +81,18 @@ public class OrganizacionDaoImpl implements IOrganizacionDao {
 
     @Override
     public List<Organizacion> findAll() {
-        String sql = "SELECT id, nombre_organizacion, activa, fecha_creacion, fecha_actualizacion FROM organizaciones ORDER BY nombre_organizacion";
+        String sql = "SELECT id, nombre_organizacion, nit, direccion, telefono, activa, fecha_creacion, fecha_actualizacion FROM organizaciones ORDER BY nombre_organizacion";
         return namedParameterJdbcTemplate.query(sql, CustomRowMappers.ORGANIZACION_ROW_MAPPER);
     }
 
     @Override
     public Organizacion update(Organizacion organizacion) {
-        String sql = "UPDATE organizaciones SET nombre_organizacion = :nombreOrganizacion, activa = :activa, fecha_actualizacion = NOW() WHERE id = :id";
+        String sql = "UPDATE organizaciones SET nombre_organizacion = :nombreOrganizacion, nit = :nit, direccion = :direccion, telefono = :telefono, activa = :activa, fecha_actualizacion = NOW() WHERE id = :id";
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("nombreOrganizacion", organizacion.getNombreOrganizacion());
+        params.addValue("nit", organizacion.getNit());
+        params.addValue("direccion", organizacion.getDireccion());
+        params.addValue("telefono", organizacion.getTelefono());
         params.addValue("activa", organizacion.getActiva());
         params.addValue("id", organizacion.getId());
 
@@ -90,7 +101,9 @@ public class OrganizacionDaoImpl implements IOrganizacionDao {
             throw new ResourceNotFoundException("Organización no encontrada con ID: " + organizacion.getId());
         }
         // Para tener las fechas actualizadas, idealmente se podría recargar el objeto:
-        // return findById(organizacion.getId()).orElseThrow(() -> new ResourceNotFoundException("Organización no encontrada después de actualizar."));
+        // return findById(organizacion.getId()).orElseThrow(() -> new
+        // ResourceNotFoundException("Organización no encontrada después de
+        // actualizar."));
         // Por simplicidad y evitar otra consulta, devolvemos el objeto con el ID.
         return organizacion;
     }

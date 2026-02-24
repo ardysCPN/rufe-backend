@@ -22,7 +22,6 @@ public class UsuarioRequest {
     @Schema(description = "Email único del usuario", example = "juan.perez@example.com")
     private String email;
 
-    @NotBlank(message = "La contraseña no puede estar vacía.")
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres.")
     @Schema(description = "Contraseña del usuario", example = "PasswordSegura123")
     private String password;

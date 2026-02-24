@@ -25,7 +25,7 @@ springdoc:
 application:
   jwt:
     secret: ${JWT_SECRET}
-    expiration: ${JWT_EXPIRATION}
+    expiration: ${JWT_EXPIRATION:28800000} # 8 hours in ms
 
 logging:
   level:

@@ -1,6 +1,5 @@
 package co.rufe.rufe.model;
 
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -15,6 +14,9 @@ import java.time.LocalDateTime;
 public class Organizacion {
     private Long id;
     private String nombreOrganizacion;
+    private String nit;
+    private String direccion;
+    private String telefono;
     private Boolean activa;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;

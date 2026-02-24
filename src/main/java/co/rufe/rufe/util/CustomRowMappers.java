@@ -34,6 +34,9 @@ public class CustomRowMappers {
                 Organizacion org = new Organizacion();
                 org.setId(rs.getLong("id"));
                 org.setNombreOrganizacion(rs.getString("nombre_organizacion"));
+                org.setNit(rs.getString("nit"));
+                org.setDireccion(rs.getString("direccion"));
+                org.setTelefono(rs.getString("telefono"));
                 org.setActiva(rs.getBoolean("activa"));
                 org.setFechaCreacion(toLocalDateTime(rs.getTimestamp("fecha_creacion")));
                 org.setFechaActualizacion(toLocalDateTime(rs.getTimestamp("fecha_actualizacion")));

@@ -27,7 +27,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
-                       AccessDeniedException accessDeniedException) throws IOException, ServletException {
+            AccessDeniedException accessDeniedException) throws IOException, ServletException {
         log.error("Acceso denegado: {}", accessDeniedException.getMessage());
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -38,10 +38,9 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
                 LocalDateTime.now(),
                 HttpStatus.FORBIDDEN.value(),
                 HttpStatus.FORBIDDEN.getReasonPhrase(),
-                "No tienes permiso para acceder a este recurso.",
-                request.getRequestURI()
-        );
-
+                "No tiene permisos para acceder a este recurso.",
+                request.getRequestURI(),
+                null);
         // Escribir la respuesta JSON al cliente
         objectMapper.writeValue(response.getOutputStream(), errorResponse);
     }

@@ -69,6 +69,9 @@ CREATE TABLE public.menu (
 CREATE TABLE public.organizaciones (
 	id bigserial NOT NULL,
 	nombre_organizacion varchar(255) NOT NULL,
+	nit varchar(50) NULL,
+	direccion varchar(255) NULL,
+	telefono varchar(50) NULL,
 	activa bool DEFAULT true NULL,
 	fecha_creacion timestamp DEFAULT now() NOT NULL,
 	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
@@ -480,7 +483,7 @@ INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES
 ('menu:eliminar', 'Permite eliminar ítems de menú', 'Menu'),
 ('menu:asignar_permisos', 'Permite asignar y revocar permisos a ítems de menú', 'Menu');
 
-INSERT INTO public.organizaciones (nombre_organizacion, activa, fecha_creacion, fecha_actualizacion) VALUES ('GlobalCorp', true, now(), now());
+INSERT INTO public.organizaciones (nombre_organizacion, nit, direccion, telefono, activa, fecha_creacion, fecha_actualizacion) VALUES ('GlobalCorp', '800.123.456-7', 'Calle Falsa 123', '3001234567', true, now(), now());
 INSERT INTO public.roles (organizacion_id, nombre_rol, descripcion, fecha_creacion) VALUES (1, 'ADMIN_GLOBAL', 'Administrador global del sistema con acceso a todas las organizaciones.', now());
 INSERT INTO public.usuarios (organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion) VALUES (1, 1, 'Admin Global Rufe', 'admin@global.com', '$2a$10$drg/AuoRyM7RubPcjupPieruaaR9V0VVEAe77bKAfrxfXhT2P2aT.', true, now(), now());
 

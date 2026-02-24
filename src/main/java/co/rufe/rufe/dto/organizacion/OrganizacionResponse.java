@@ -15,6 +15,15 @@ public class OrganizacionResponse {
     @Schema(description = "Nombre de la organización", example = "MiEmpresaSAAS")
     private String nombreOrganizacion;
 
+    @Schema(description = "NIT de la organización", example = "800.123.456-7")
+    private String nit;
+
+    @Schema(description = "Dirección de la organización", example = "Calle 14 # 8-30")
+    private String direccion;
+
+    @Schema(description = "Teléfono de la organización", example = "3001234567")
+    private String telefono;
+
     @Schema(description = "Estado de actividad de la organización", example = "true")
     private Boolean activa;
 

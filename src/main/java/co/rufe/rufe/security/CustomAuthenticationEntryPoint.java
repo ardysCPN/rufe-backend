@@ -27,7 +27,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
-                         AuthenticationException authException) throws IOException, ServletException {
+            AuthenticationException authException) throws IOException, ServletException {
         log.error("Error de autenticación: {}", authException.getMessage());
 
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -38,10 +38,9 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                 LocalDateTime.now(),
                 HttpStatus.UNAUTHORIZED.value(),
                 HttpStatus.UNAUTHORIZED.getReasonPhrase(),
-                "Acceso denegado. Se requiere autenticación válida o el token es inválido/expirado.",
-                request.getRequestURI()
-        );
-
+                "Debe estar autenticado para acceder a este recurso.",
+                request.getRequestURI(),
+                null);
         // Escribir la respuesta JSON al cliente
         objectMapper.writeValue(response.getOutputStream(), errorResponse);
     }

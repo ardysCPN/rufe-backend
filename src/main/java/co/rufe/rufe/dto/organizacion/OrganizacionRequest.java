@@ -14,6 +14,15 @@ public class OrganizacionRequest {
     @Schema(description = "Nombre único de la organización", example = "MiEmpresaSAAS")
     private String nombreOrganizacion;
 
+    @Schema(description = "NIT de la organización", example = "800.123.456-7")
+    private String nit;
+
+    @Schema(description = "Dirección de la organización", example = "Calle 10 # 5-20")
+    private String direccion;
+
+    @Schema(description = "Teléfono de contacto", example = "3001234567")
+    private String telefono;
+
     @Schema(description = "Estado de actividad de la organización", example = "true")
     private Boolean activa; // Opcional, si no se envía, el DAO puede usar el default de la BD
 }
