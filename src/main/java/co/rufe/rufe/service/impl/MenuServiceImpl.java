@@ -1,10 +1,12 @@
 package co.rufe.rufe.service.impl;
 
 import co.rufe.rufe.dao.IMenuDao;
+import co.rufe.rufe.dao.IMenuRolesDao;
 import co.rufe.rufe.dto.menu.MenuDTO;
 import co.rufe.rufe.model.Menu;
 import co.rufe.rufe.service.IMenuService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,9 +18,11 @@ import java.util.stream.Collectors;
 public class MenuServiceImpl implements IMenuService {
 
     private final IMenuDao menuDao;
+    private final IMenuRolesDao menuRolesDao;
 
-    public MenuServiceImpl(IMenuDao menuDao) {
+    public MenuServiceImpl(IMenuDao menuDao, IMenuRolesDao menuRolesDao) {
         this.menuDao = menuDao;
+        this.menuRolesDao = menuRolesDao;
     }
 
     @Override
@@ -27,30 +31,24 @@ public class MenuServiceImpl implements IMenuService {
         return buildMenuTree(allMenuItems);
     }
 
+    @Override
+    public List<MenuDTO> getAllMenus() {
+        List<Menu> allMenuItems = menuDao.findAll();
+        return buildMenuTree(allMenuItems);
+    }
+
+    @Override
+    @Transactional
+    public void updateRoleMenus(Long rolId, List<Long> menuIds) {
+        menuRolesDao.deleteByRolId(rolId);
+        if (menuIds != null) {
+            for (Long menuId : menuIds) {
+                menuRolesDao.assignMenuToRol(rolId, menuId);
+            }
+        }
+    }
+
     private List<MenuDTO> buildMenuTree(List<Menu> allItems) {
-        // Mapear DTOs
-        List<MenuDTO> allDTOs = allItems.stream().map(this::toDTO).collect(Collectors.toList());
-
-        // Agrupar por parentId (idMenu)
-        Map<Long, List<MenuDTO>> childrenMap = allItems.stream()
-                .filter(item -> item.getIdMenu() != null)
-                .map(this::toDTO)
-                .collect(Collectors.groupingBy(dto -> {
-                    /*
-                     * Recuperamos el parent ID del modelo original dado que el DTO no lo tiene
-                     * explícito,
-                     * pero necesitamos una forma más limpia.
-                     * 
-                     * Mejor estrategia: Map<Id, DTO> y Map<ParentId, List<DTO>>
-                     */
-                    return allItems.stream()
-                            .filter(m -> m.getId().equals(dto.getId()))
-                            .findFirst()
-                            .map(Menu::getIdMenu)
-                            .orElse(0L);
-                }));
-
-        // Estrategia simplificada:
         // 1. Convertir todos a DTOs y guardarlos en un mapa ID -> DTO
         Map<Long, MenuDTO> dtoMap = allItems.stream()
                 .collect(Collectors.toMap(Menu::getId, this::toDTO));

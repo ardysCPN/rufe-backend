@@ -39,4 +39,10 @@ public class MenuDaoImpl implements IMenuDao {
         MapSqlParameterSource params = new MapSqlParameterSource("rolId", rolId);
         return namedParameterJdbcTemplate.query(sql, params, menuRowMapper);
     }
+
+    @Override
+    public List<Menu> findAll() {
+        String sql = "SELECT * FROM menu ORDER BY orden";
+        return namedParameterJdbcTemplate.query(sql, menuRowMapper);
+    }
 }
