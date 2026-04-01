@@ -9,7 +9,11 @@ public interface IEventoRealDao {
 
     void update(EventoReal evento);
 
+    Optional<EventoReal> findById(Long id);
+
     Optional<EventoReal> findByIdAndOrganizacionId(Long id, Long organizacionId);
+
+    List<EventoReal> findAll();
 
     List<EventoReal> findAllByOrganizacionId(Long organizacionId);
 

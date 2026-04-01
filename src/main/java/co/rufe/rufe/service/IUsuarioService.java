@@ -7,10 +7,16 @@ import java.util.List;
 
 public interface IUsuarioService {
     UsuarioResponse createUsuario(Long organizacionId, UsuarioRequest request);
-    UsuarioResponse getUsuarioById(Long id);
+
+    UsuarioResponse getUsuarioById(Long id, Long organizacionId, boolean isAdmin);
+
     UsuarioResponse getUsuarioByEmailAndOrganizacionId(Long organizacionId, String email);
-    List<UsuarioResponse> getUsuariosByOrganizacionId(Long organizacionId);
-    UsuarioResponse updateUsuario(Long id, Long organizacionId, UsuarioRequest request);
-    void deleteUsuario(Long id, Long organizacionId);
+
+    List<UsuarioResponse> getUsuariosByOrganizacionId(Long organizacionId, boolean isAdmin);
+
+    UsuarioResponse updateUsuario(Long id, Long organizacionId, UsuarioRequest request, boolean isAdmin);
+
+    void deleteUsuario(Long id, Long organizacionId, boolean isAdmin);
+
     UsuarioResponse getUsuarioByEmail(Long organizacionId, String email);
 }

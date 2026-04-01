@@ -161,6 +161,7 @@ CREATE TABLE public.eventos (
 	CONSTRAINT eventos_pkey PRIMARY KEY (id),
 	CONSTRAINT eventos_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
 );
+CREATE INDEX idx_eventos_organizacion_id ON public.eventos(organizacion_id);
 
 -- Triggers for eventos
 create trigger set_timestamp_eventos before
@@ -188,6 +189,7 @@ CREATE TABLE public.roles (
 	CONSTRAINT roles_pkey PRIMARY KEY (id),
 	CONSTRAINT roles_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
 );
+CREATE INDEX idx_roles_organizacion_id ON public.roles(organizacion_id);
 
 -- public.rol_permisos definition
 CREATE TABLE public.rol_permisos (
@@ -215,6 +217,7 @@ CREATE TABLE public.usuarios (
 	CONSTRAINT usuarios_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE RESTRICT,
 	CONSTRAINT usuarios_rol_id_fkey FOREIGN KEY (rol_id) REFERENCES public.roles(id) ON DELETE RESTRICT
 );
+CREATE INDEX idx_usuarios_organizacion_id ON public.usuarios(organizacion_id);
 
 -- Triggers for usuarios
 create trigger set_timestamp_usuarios before
@@ -245,6 +248,7 @@ CREATE TABLE public.audit_log (
 	CONSTRAINT audit_log_pkey PRIMARY KEY (id),
 	CONSTRAINT audit_log_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
 );
+CREATE INDEX idx_audit_log_organizacion_id ON public.audit_log(organizacion_id);
 
 -- public.registros_rufe definition
 CREATE TABLE public.registros_rufe (
@@ -276,6 +280,7 @@ CREATE TABLE public.registros_rufe (
 	CONSTRAINT registros_rufe_tipo_ubicacion_bien_id_fkey FOREIGN KEY (tipo_ubicacion_bien_id) REFERENCES public.tipo_ubicacion_bien(id),
 	CONSTRAINT registros_rufe_usuario_registrador_id_fkey FOREIGN KEY (usuario_registrador_id) REFERENCES public.usuarios(id)
 );
+CREATE INDEX idx_registros_rufe_organizacion_id ON public.registros_rufe(organizacion_id);
 CREATE INDEX idx_registros_rufe_tipo_evento ON public.registros_rufe USING btree (tipo_evento_id);
 
 -- Trigger for registros_rufe

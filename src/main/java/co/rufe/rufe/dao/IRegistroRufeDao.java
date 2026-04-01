@@ -4,6 +4,7 @@ import co.rufe.rufe.model.ActivoAgropecuario;
 import co.rufe.rufe.model.BienAfectado;
 import co.rufe.rufe.model.IntegranteHogar;
 import co.rufe.rufe.model.RegistroRufe;
+import java.util.List;
 import java.util.Optional;
 
 public interface IRegistroRufeDao {
@@ -24,4 +25,8 @@ public interface IRegistroRufeDao {
 
     // Opcional: Buscar por ID para respuestas futuras
     Optional<RegistroRufe> findById(Long id);
+
+    List<RegistroRufe> findAll();
+
+    List<RegistroRufe> findAllByOrganizacionId(Long organizacionId);
 }

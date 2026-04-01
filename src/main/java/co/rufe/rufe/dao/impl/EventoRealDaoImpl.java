@@ -10,7 +10,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -83,6 +83,17 @@ public class EventoRealDaoImpl implements IEventoRealDao {
     }
 
     @Override
+    public Optional<EventoReal> findById(Long id) {
+        String sql = "SELECT * FROM eventos WHERE id = :id AND fecha_eliminacion IS NULL";
+        MapSqlParameterSource params = new MapSqlParameterSource("id", id);
+        try {
+            return Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, rowMapper));
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
     public Optional<EventoReal> findByIdAndOrganizacionId(Long id, Long organizacionId) {
         String sql = "SELECT * FROM eventos WHERE id = :id AND organizacion_id = :organizacionId AND fecha_eliminacion IS NULL";
         MapSqlParameterSource params = new MapSqlParameterSource();
@@ -93,6 +104,12 @@ public class EventoRealDaoImpl implements IEventoRealDao {
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public List<EventoReal> findAll() {
+        String sql = "SELECT * FROM eventos WHERE fecha_eliminacion IS NULL ORDER BY fecha_actualizacion DESC";
+        return namedParameterJdbcTemplate.query(sql, rowMapper);
     }
 
     @Override

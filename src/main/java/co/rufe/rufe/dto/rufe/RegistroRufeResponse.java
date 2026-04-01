@@ -16,4 +16,10 @@ public class RegistroRufeResponse {
     private String estado;
     private String mensaje;
     private LocalDateTime fechaRecepcion;
+    private LocalDateTime fechaRegistro;
+    private Long eventoId;
+    private Long tipoEventoId;
+    private String corregimiento;
+    private String veredaSectorBarrio;
+    private String direccion;
 }

@@ -57,10 +57,8 @@ public class UsuarioDaoImpl implements IUsuarioDao {
     public Optional<Usuario> findById(Long id) {
         String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion "
                 +
-                "FROM usuarios WHERE id = :id AND organizacion_id = :organizacionId";
-        MapSqlParameterSource params = new MapSqlParameterSource();
-        params.addValue("id", id);
-        params.addValue("organizacionId", TenantContext.getCurrentOrganizationId());
+                "FROM usuarios WHERE id = :id";
+        MapSqlParameterSource params = new MapSqlParameterSource("id", id);
         try {
             return Optional.ofNullable(
                     namedParameterJdbcTemplate.queryForObject(sql, params, CustomRowMappers.USUARIO_ROW_MAPPER));
@@ -111,6 +109,14 @@ public class UsuarioDaoImpl implements IUsuarioDao {
     }
 
     @Override
+    public List<Usuario> findAll() {
+        String sql = "SELECT id, organizacion_id, rol_id, nombre_completo, email, password_hash, activo, fecha_creacion, fecha_actualizacion "
+                +
+                "FROM usuarios ORDER BY nombre_completo";
+        return namedParameterJdbcTemplate.query(sql, CustomRowMappers.USUARIO_ROW_MAPPER);
+    }
+
+    @Override
     public List<UsuarioWithDetails> findByOrganizacionIdWithDetails(Long organizacionId) {
         String sql = "SELECT u.id, u.organizacion_id, o.nombre_organizacion, o.activa as organizacion_activa, " +
                 "u.rol_id, r.nombre_rol, u.nombre_completo, u.email, u.password_hash, u.activo, " +
@@ -121,6 +127,18 @@ public class UsuarioDaoImpl implements IUsuarioDao {
                 "WHERE u.organizacion_id = :organizacionId ORDER BY u.nombre_completo";
         MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
         return namedParameterJdbcTemplate.query(sql, params, CustomRowMappers.USUARIO_WITH_DETAILS_ROW_MAPPER);
+    }
+
+    @Override
+    public List<UsuarioWithDetails> findAllWithDetails() {
+        String sql = "SELECT u.id, u.organizacion_id, o.nombre_organizacion, o.activa as organizacion_activa, " +
+                "u.rol_id, r.nombre_rol, u.nombre_completo, u.email, u.password_hash, u.activo, " +
+                "u.fecha_creacion, u.fecha_actualizacion " +
+                "FROM usuarios u " +
+                "JOIN roles r ON u.rol_id = r.id " +
+                "JOIN organizaciones o ON u.organizacion_id = o.id " +
+                "ORDER BY u.nombre_completo";
+        return namedParameterJdbcTemplate.query(sql, CustomRowMappers.USUARIO_WITH_DETAILS_ROW_MAPPER);
     }
 
     @Override

@@ -18,75 +18,84 @@ import java.util.List;
 @Slf4j
 public class UsuarioController {
 
-    private final IUsuarioService usuarioService;
+        private final IUsuarioService usuarioService;
+        private final co.rufe.rufe.security.SecurityUtils securityUtils;
 
-    public UsuarioController(IUsuarioService usuarioService) {
-        this.usuarioService = usuarioService;
-    }
+        public UsuarioController(IUsuarioService usuarioService, co.rufe.rufe.security.SecurityUtils securityUtils) {
+                this.usuarioService = usuarioService;
+                this.securityUtils = securityUtils;
+        }
 
-    @PostMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UsuarioResponse> createUsuario(
-            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
-            @Valid @RequestBody UsuarioRequest request) {
-        log.info("Solicitud para crear usuario '{}' en organización ID: {}", request.getEmail(),
-                userDetails.getOrganizacionId());
-        UsuarioResponse response = usuarioService.createUsuario(userDetails.getOrganizacionId(), request);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
+        @PostMapping
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<UsuarioResponse> createUsuario(
+                        @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
+                        @Valid @RequestBody UsuarioRequest request) {
+                log.info("Solicitud para crear usuario '{}' en organización ID: {}", request.getEmail(),
+                                userDetails.getOrganizacionId());
+                UsuarioResponse response = usuarioService.createUsuario(userDetails.getOrganizacionId(), request);
+                return new ResponseEntity<>(response, HttpStatus.CREATED);
+        }
 
-    @GetMapping("/{usuarioId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UsuarioResponse> getUsuarioById(
-            @PathVariable Long usuarioId) {
-        log.info("Solicitud para obtener usuario con ID {}", usuarioId);
-        // Nota: El servicio debería validar que el usuario pertenezca a la misma
-        // organización del solicitante
-        // si se requiere aislamiento estricto. Por ahora pasamos solo el ID.
-        UsuarioResponse response = usuarioService.getUsuarioById(usuarioId);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+        @GetMapping("/{usuarioId}")
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<UsuarioResponse> getUsuarioById(
+                        @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
+                        @PathVariable Long usuarioId) {
+                log.info("Solicitud para obtener usuario con ID {}", usuarioId);
+                boolean isAdmin = securityUtils.isGlobalAdmin();
+                UsuarioResponse response = usuarioService.getUsuarioById(usuarioId, userDetails.getOrganizacionId(),
+                                isAdmin);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+        }
 
-    @GetMapping("/email/{email}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UsuarioResponse> getUsuarioByEmail(
-            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
-            @PathVariable String email) {
-        log.info("Solicitud para obtener usuario con email '{}' en organización ID: {}", email,
-                userDetails.getOrganizacionId());
-        UsuarioResponse response = usuarioService.getUsuarioByEmail(userDetails.getOrganizacionId(), email);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+        @GetMapping("/email/{email}")
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<UsuarioResponse> getUsuarioByEmail(
+                        @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
+                        @PathVariable String email) {
+                log.info("Solicitud para obtener usuario con email '{}' en organización ID: {}", email,
+                                userDetails.getOrganizacionId());
+                UsuarioResponse response = usuarioService.getUsuarioByEmail(userDetails.getOrganizacionId(), email);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+        }
 
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<UsuarioResponse>> getUsuariosByOrganizacionId(
-            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails) {
-        log.info("Solicitud para obtener usuarios de organización ID: {}", userDetails.getOrganizacionId());
-        List<UsuarioResponse> responses = usuarioService.getUsuariosByOrganizacionId(userDetails.getOrganizacionId());
-        return new ResponseEntity<>(responses, HttpStatus.OK);
-    }
+        @GetMapping
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<List<UsuarioResponse>> getUsuariosByOrganizacionId(
+                        @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails) {
+                log.info("Solicitud para obtener usuarios de organización ID: {}", userDetails.getOrganizacionId());
+                boolean isAdmin = securityUtils.isGlobalAdmin();
+                List<UsuarioResponse> responses = usuarioService.getUsuariosByOrganizacionId(
+                                userDetails.getOrganizacionId(),
+                                isAdmin);
+                return new ResponseEntity<>(responses, HttpStatus.OK);
+        }
 
-    @PutMapping("/{usuarioId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UsuarioResponse> updateUsuario(
-            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
-            @PathVariable Long usuarioId,
-            @Valid @RequestBody UsuarioRequest request) {
-        log.info("Solicitud para actualizar usuario con ID {} en organización ID: {}", usuarioId,
-                userDetails.getOrganizacionId());
-        UsuarioResponse response = usuarioService.updateUsuario(usuarioId, userDetails.getOrganizacionId(), request);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
+        @PutMapping("/{usuarioId}")
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<UsuarioResponse> updateUsuario(
+                        @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
+                        @PathVariable Long usuarioId,
+                        @Valid @RequestBody UsuarioRequest request) {
+                log.info("Solicitud para actualizar usuario con ID {} en organización ID: {}", usuarioId,
+                                userDetails.getOrganizacionId());
+                boolean isAdmin = securityUtils.isGlobalAdmin();
+                UsuarioResponse response = usuarioService.updateUsuario(usuarioId, userDetails.getOrganizacionId(),
+                                request,
+                                isAdmin);
+                return new ResponseEntity<>(response, HttpStatus.OK);
+        }
 
-    @DeleteMapping("/{usuarioId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> deleteUsuario(
-            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
-            @PathVariable Long usuarioId) {
-        log.info("Solicitud para eliminar usuario con ID {} en organización ID: {}", usuarioId,
-                userDetails.getOrganizacionId());
-        usuarioService.deleteUsuario(usuarioId, userDetails.getOrganizacionId());
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
+        @DeleteMapping("/{usuarioId}")
+        @PreAuthorize("isAuthenticated()")
+        public ResponseEntity<Void> deleteUsuario(
+                        @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
+                        @PathVariable Long usuarioId) {
+                log.info("Solicitud para eliminar usuario con ID {} en organización ID: {}", usuarioId,
+                                userDetails.getOrganizacionId());
+                boolean isAdmin = securityUtils.isGlobalAdmin();
+                usuarioService.deleteUsuario(usuarioId, userDetails.getOrganizacionId(), isAdmin);
+                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
 }

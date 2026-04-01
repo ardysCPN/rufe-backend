@@ -12,6 +12,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -158,6 +159,49 @@ public class RegistroRufeDaoImpl implements IRegistroRufeDao {
 
     @Override
     public Optional<RegistroRufe> findById(Long id) {
-        return Optional.empty(); // Not implemented yet
+        String sql = "SELECT * FROM registros_rufe WHERE id = :id AND fecha_eliminacion IS NULL";
+        MapSqlParameterSource params = new MapSqlParameterSource("id", id);
+        try {
+            RegistroRufe registro = namedParameterJdbcTemplate.queryForObject(sql, params, this::mapRowToRegistroRufe);
+            return Optional.ofNullable(registro);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<RegistroRufe> findAll() {
+        String sql = "SELECT * FROM registros_rufe WHERE fecha_eliminacion IS NULL ORDER BY fecha_registro DESC";
+        return namedParameterJdbcTemplate.query(sql, this::mapRowToRegistroRufe);
+    }
+
+    @Override
+    public List<RegistroRufe> findAllByOrganizacionId(Long organizacionId) {
+        String sql = "SELECT * FROM registros_rufe WHERE organizacion_id = :organizacionId AND fecha_eliminacion IS NULL ORDER BY fecha_registro DESC";
+        MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
+        return namedParameterJdbcTemplate.query(sql, params, this::mapRowToRegistroRufe);
+    }
+
+    private RegistroRufe mapRowToRegistroRufe(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
+        return RegistroRufe.builder()
+                .id(rs.getLong("id"))
+                .organizacionId(rs.getLong("organizacion_id"))
+                .eventoId(rs.getLong("evento_id"))
+                .tipoEventoId(rs.getLong("tipo_evento_id"))
+                .usuarioRegistradorId(rs.getLong("usuario_registrador_id"))
+                .clienteId(rs.getString("cliente_id"))
+                .fechaRegistro(rs.getTimestamp("fecha_registro").toLocalDateTime())
+                .tipoUbicacionBienId(rs.getInt("tipo_ubicacion_bien_id"))
+                .corregimiento(rs.getString("corregimiento"))
+                .veredaSectorBarrio(rs.getString("vereda_sector_barrio"))
+                .direccion(rs.getString("direccion"))
+                .tipoAlojamientoActualId(rs.getInt("tipo_alojamiento_actual_id"))
+                .lugarHabitualResidencia(rs.getString("lugar_habitual_residencia"))
+                .evacuadoFueraResidencia(rs.getBoolean("evacuado_fuera_residencia"))
+                .observaciones(rs.getString("observaciones"))
+                .voBoCmgrd(rs.getString("vo_bo_cmgrd"))
+                .fechaCreacion(rs.getTimestamp("fecha_creacion").toLocalDateTime())
+                .fechaActualizacion(rs.getTimestamp("fecha_actualizacion").toLocalDateTime())
+                .build();
     }
 }
