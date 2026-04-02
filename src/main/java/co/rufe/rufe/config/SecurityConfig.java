@@ -79,8 +79,8 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Sesiones sin estado para JWT
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        // Permitir acceso sin autenticación a /auth/** (login, registro)
-                        .requestMatchers("/auth/**").permitAll()
+                        // Permitir acceso sin autenticación a /auth/** (login, registro) y acceso público ciudadano
+                        .requestMatchers("/auth/**", "/api/public/**").permitAll()
                         // Permitir acceso a Swagger UI y OpenAPI docs
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Permitir la ruta de error para depuración

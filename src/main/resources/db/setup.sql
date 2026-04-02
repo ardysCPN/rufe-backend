@@ -154,6 +154,7 @@ CREATE TABLE public.eventos (
 	departamento varchar(100) NULL,
 	municipio varchar(100) NULL,
 	descripcion text NULL,
+	zona_afectacion geometry(Polygon, 4326) NULL,
 	fecha_creacion timestamp DEFAULT now() NOT NULL,
 	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
 	fecha_eliminacion timestamp NULL,
@@ -271,6 +272,8 @@ CREATE TABLE public.registros_rufe (
 	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
 	fecha_eliminacion timestamp NULL,
 	tipo_evento_id int4 NULL,
+	ubicacion geometry(Point, 4326) NULL,
+	ubicacion_offline jsonb NULL,
 	CONSTRAINT registros_rufe_cliente_id_key UNIQUE (cliente_id),
 	CONSTRAINT registros_rufe_pkey PRIMARY KEY (id),
 	CONSTRAINT fk_registros_rufe_tipo_evento FOREIGN KEY (tipo_evento_id) REFERENCES public.evento(id),
@@ -374,6 +377,43 @@ create trigger set_timestamp_integrantes_hogar before
 update
     on
     public.integrantes_hogar for each row execute function actualizar_fecha_modificacion();
+
+-- public.ayuda_catalogo definition
+CREATE TABLE public.ayuda_catalogo (
+	id serial4 NOT NULL,
+	nombre varchar(150) NOT NULL,
+	descripcion text NULL,
+	unidad_medida varchar(50) NOT NULL,
+	CONSTRAINT ayuda_catalogo_pkey PRIMARY KEY (id)
+);
+
+-- public.bodega_inventario definition
+CREATE TABLE public.bodega_inventario (
+	id bigserial NOT NULL,
+	organizacion_id int8 NOT NULL,
+	ayuda_catalogo_id int4 NOT NULL,
+	cantidad numeric(10,2) NOT NULL DEFAULT 0,
+	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT bodega_inventario_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_bodega_organizacion FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE,
+	CONSTRAINT fk_bodega_ayuda FOREIGN KEY (ayuda_catalogo_id) REFERENCES public.ayuda_catalogo(id)
+);
+
+-- public.ayudas_entregadas definition
+CREATE TABLE public.ayudas_entregadas (
+	id bigserial NOT NULL,
+	organizacion_id int8 NOT NULL,
+	registro_rufe_id int8 NOT NULL,
+	ayuda_catalogo_id int4 NOT NULL,
+	cantidad numeric(10,2) NOT NULL,
+	firma_digital text NULL,
+	evidencia_foto_url varchar(500) NULL,
+	fecha_entrega timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT ayudas_entregadas_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_ayuda_entrega_org FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE,
+	CONSTRAINT fk_ayuda_entrega_rufe FOREIGN KEY (registro_rufe_id) REFERENCES public.registros_rufe(id),
+	CONSTRAINT fk_ayuda_entrega_cat FOREIGN KEY (ayuda_catalogo_id) REFERENCES public.ayuda_catalogo(id)
+);
 
 -- ==================== 2. Inserts ====================
 
