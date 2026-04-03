@@ -29,4 +29,11 @@ public interface IRegistroRufeDao {
     List<RegistroRufe> findAll();
 
     List<RegistroRufe> findAllByOrganizacionId(Long organizacionId);
+
+    // Consulta desacoplada para reportes
+    List<java.util.Map<String, Object>> obtenerDatosReporteExcel(Long organizacionId, boolean isAdmin);
+
+    void update(RegistroRufe registro);
+
+    void deleteById(Long id);
 }

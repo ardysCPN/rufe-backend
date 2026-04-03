@@ -39,6 +39,7 @@ public class OrganizacionController {
     // Permite a un ADMIN_GLOBAL leer cualquier organización, o a un usuario de esa
     // organización leer la suya.
     // Permiso requerido: organizaciones:leer
+    @GetMapping("/{organizacionId}")
     @PreAuthorize("@securityUtils.isUserInOrganization(#organizacionId) or @securityUtils.isGlobalAdmin()")
     public ResponseEntity<OrganizacionResponse> getOrganizacionById(@PathVariable Long organizacionId) {
         log.info("Solicitud para obtener organización con ID: {}", organizacionId);

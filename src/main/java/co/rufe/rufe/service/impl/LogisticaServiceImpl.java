@@ -33,6 +33,13 @@ public class LogisticaServiceImpl implements ILogisticaService {
 
     @Override
     @Transactional
+    public AyudaCatalogo addCatalogoAyuda(AyudaCatalogo item) {
+        log.info("Agregando nuevo item al catálogo transversal de ayudas: {}", item.getNombre());
+        return catalogoDao.save(item);
+    }
+
+    @Override
+    @Transactional
     public BodegaInventario addStockBodega(Long organizacionId, Integer ayudaCatalogoId, BigDecimal cantidad) {
         Optional<BodegaInventario> actual = bodegaDao.findByOrganizacionAndAyuda(organizacionId, ayudaCatalogoId);
         

@@ -171,4 +171,44 @@ public class RegistroRufeServiceImpl implements IRegistroRufeService {
             }
         }
     }
+
+    @Override
+    @Transactional
+    public void actualizarRegistro(Long id, RegistroRufeCreateRequest request, Long organizacionId, boolean isAdmin) {
+        log.info("Actualizando registro RUFE ID: {}. OrganizacionId: {}, IsAdmin: {}", id, organizacionId, isAdmin);
+        RegistroRufe registro = registroRufeDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Registro RUFE no encontrado."));
+
+        if (!isAdmin && !registro.getOrganizacionId().equals(organizacionId)) {
+            throw new co.rufe.rufe.exception.AuthorizationException("No tiene permisos para editar este registro.");
+        }
+
+        // Actualizar campos permitidos
+        registro.setTipoEventoId(request.getTipoEventoId());
+        registro.setTipoUbicacionBienId(request.getTipoUbicacionBienId());
+        registro.setCorregimiento(request.getCorregimiento());
+        registro.setVeredaSectorBarrio(request.getVeredaSectorBarrio());
+        registro.setDireccion(request.getDireccion());
+        registro.setTipoAlojamientoActualId(request.getTipoAlojamientoActualId());
+        registro.setLugarHabitualResidencia(request.getLugarHabitualResidencia());
+        registro.setEvacuadoFueraResidencia(request.getEvacuadoFueraResidencia());
+        registro.setObservaciones(request.getObservaciones());
+        registro.setVoBoCmgrd(request.getVoBoCmgrd());
+
+        registroRufeDao.update(registro);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarRegistro(Long id, Long organizacionId, boolean isAdmin) {
+        log.info("Eliminando registro RUFE ID: {}. OrganizacionId: {}, IsAdmin: {}", id, organizacionId, isAdmin);
+        RegistroRufe registro = registroRufeDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Registro RUFE no encontrado o ya eliminado."));
+
+        if (!isAdmin && !registro.getOrganizacionId().equals(organizacionId)) {
+            throw new co.rufe.rufe.exception.AuthorizationException("No tiene permisos para eliminar este registro.");
+        }
+
+        registroRufeDao.deleteById(id);
+    }
 }

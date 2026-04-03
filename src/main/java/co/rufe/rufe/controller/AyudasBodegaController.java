@@ -32,6 +32,13 @@ public class AyudasBodegaController {
         return ResponseEntity.ok(logisticaService.getCatalogoAyudas());
     }
 
+    @Operation(summary = "Agregar un nuevo tipo de ayuda al catálogo transversal", description = "Crea un nuevo ítem como 'Colchones', 'Mercados', etc.")
+    @PostMapping("/catalogo")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
+    public ResponseEntity<AyudaCatalogo> addCatalogoItem(@RequestBody AyudaCatalogo request) {
+        return ResponseEntity.ok(logisticaService.addCatalogoAyuda(request));
+    }
+
     @Operation(summary = "Ver inventario de bodega de mi organización", description = "Retorna el stock actual.")
     @GetMapping("/inventario")
     @PreAuthorize("hasAuthority('bodega:leer') OR hasAuthority('ROLE_ADMIN_GLOBAL')")

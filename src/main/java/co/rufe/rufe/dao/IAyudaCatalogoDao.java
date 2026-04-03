@@ -6,4 +6,5 @@ import java.util.List;
 public interface IAyudaCatalogoDao {
     List<AyudaCatalogo> findAll();
     AyudaCatalogo findById(Integer id);
+    AyudaCatalogo save(AyudaCatalogo item);
 }

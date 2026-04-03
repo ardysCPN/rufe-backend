@@ -11,6 +11,7 @@ public interface ILogisticaService {
 
     // Catalogo
     List<AyudaCatalogo> getCatalogoAyudas();
+    AyudaCatalogo addCatalogoAyuda(AyudaCatalogo item);
 
     // Bodega
     BodegaInventario addStockBodega(Long organizacionId, Integer ayudaCatalogoId, BigDecimal cantidad);

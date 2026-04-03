@@ -45,7 +45,7 @@ public class EvidenciaRufeController {
     public ResponseEntity<List<EvidenciaRufe>> getEvidencias(@PathVariable Long registroRufeId) {
         return ResponseEntity.ok(evidenciaRufeDao.findByRegistroRufeId(registroRufeId));
     }
-    
+
     @Operation(summary = "Desvincular o eliminar evidencia")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN_GLOBAL')")

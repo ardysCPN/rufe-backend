@@ -37,11 +37,13 @@ logging:
 
 app:
   dataloader:
-    enabled: ${APP_DATALOADER_ENABLED:true}
+    enabled: ${APP_DATALOADER_ENABLED:false}
     force-reset: ${APP_DATALOADER_FORCE_RESET:false}
     i-am-sure: ${APP_DATALOADER_I_AM_SURE:false}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:4000}
+  storage:
+    local-dir: ${APP_STORAGE_LOCAL_DIR:c:/rufe/evidences}
 
 aws:
   s3:

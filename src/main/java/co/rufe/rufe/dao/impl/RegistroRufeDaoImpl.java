@@ -204,4 +204,62 @@ public class RegistroRufeDaoImpl implements IRegistroRufeDao {
                 .fechaActualizacion(rs.getTimestamp("fecha_actualizacion").toLocalDateTime())
                 .build();
     }
+
+    @Override
+    public List<java.util.Map<String, Object>> obtenerDatosReporteExcel(Long organizacionId, boolean isAdmin) {
+        String sql = "SELECT r.id AS \"ID Registro\", r.cliente_id AS \"Nro Radicado\", r.fecha_registro AS \"Fecha\", " +
+                     "r.direccion AS \"Direccion\", r.corregimiento AS \"Corregimiento\", r.vereda_sector_barrio AS \"Barrio/Vereda\", " +
+                     "u.nombre_completo AS \"Registrado Por\", " +
+                     "o.nombre_organizacion AS \"Organizacion\" " +
+                     "FROM registros_rufe r " +
+                     "LEFT JOIN usuarios u ON r.usuario_registrador_id = u.id " +
+                     "LEFT JOIN organizaciones o ON r.organizacion_id = o.id ";
+                     
+        if (!isAdmin) {
+            sql += " WHERE r.organizacion_id = :organizacionId ORDER BY r.id DESC";
+            MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
+            return namedParameterJdbcTemplate.queryForList(sql, params);
+        } else {
+            sql += " ORDER BY r.id DESC";
+            return namedParameterJdbcTemplate.queryForList(sql, new MapSqlParameterSource());
+        }
+    }
+
+    @Override
+    public void update(RegistroRufe registro) {
+        String sql = "UPDATE registros_rufe SET " +
+                "tipo_evento_id = :tipoEventoId, " +
+                "tipo_ubicacion_bien_id = :tipoUbicacionBienId, " +
+                "corregimiento = :corregimiento, " +
+                "vereda_sector_barrio = :veredaSectorBarrio, " +
+                "direccion = :direccion, " +
+                "tipo_alojamiento_actual_id = :tipoAlojamientoActualId, " +
+                "lugar_habitual_residencia = :lugarHabitualResidencia, " +
+                "evacuado_fuera_residencia = :evacuadoFueraResidencia, " +
+                "observaciones = :observaciones, " +
+                "vo_bo_cmgrd = :voBoCmgrd, " +
+                "fecha_actualizacion = NOW() " +
+                "WHERE id = :id";
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("id", registro.getId());
+        params.addValue("tipoEventoId", registro.getTipoEventoId());
+        params.addValue("tipoUbicacionBienId", registro.getTipoUbicacionBienId());
+        params.addValue("corregimiento", registro.getCorregimiento());
+        params.addValue("veredaSectorBarrio", registro.getVeredaSectorBarrio());
+        params.addValue("direccion", registro.getDireccion());
+        params.addValue("tipoAlojamientoActualId", registro.getTipoAlojamientoActualId());
+        params.addValue("lugarHabitualResidencia", registro.getLugarHabitualResidencia());
+        params.addValue("evacuadoFueraResidencia", registro.getEvacuadoFueraResidencia());
+        params.addValue("observaciones", registro.getObservaciones());
+        params.addValue("voBoCmgrd", registro.getVoBoCmgrd());
+
+        namedParameterJdbcTemplate.update(sql, params);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        String sql = "UPDATE registros_rufe SET fecha_eliminacion = NOW() WHERE id = :id";
+        namedParameterJdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
+    }
 }
