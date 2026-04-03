@@ -1,6 +1,9 @@
 package co.rufe.rufe.service;
 
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+
 public interface IEvidenceService {
-    String generatePresignedUploadUrl(String bucketName, String objectKey, String contentType);
-    String generatePresignedDownloadUrl(String bucketName, String objectKey);
+    String uploadEvidence(MultipartFile file, String subFolder) throws IOException;
+    String getEvidenceUrl(String subFolder, String filename);
 }

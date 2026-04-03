@@ -182,6 +182,6 @@ public class SecurityUtils {
     public boolean isGlobalAdmin() {
         return org.springframework.security.core.context.SecurityContextHolder.getContext()
                 .getAuthentication().getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ADMIN_GLOBAL"));
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN_GLOBAL"));
     }
 }

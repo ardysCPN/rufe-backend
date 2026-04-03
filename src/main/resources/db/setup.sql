@@ -1,6 +1,9 @@
 -- Database Startup Script
 -- This script contains DDL (tables, triggers, functions) and DML (initial data)
 
+-- Install PostGIS Extension for Geolocation features (Important para tablas como 'evento_real')
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 -- ==================== 0. Helper Function ====================
 CREATE OR REPLACE FUNCTION public.actualizar_fecha_modificacion()
  RETURNS trigger
@@ -502,10 +505,13 @@ INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, i
 (14, 4, 2, '/tools/sub', 'Herramientas sub', 'panel_settings', 111, now()),
 (15, 4, 2, '/tools/sync-status', 'Estado de Sincronización', 'sync', 112, now()),
 (16, 5, 2, '/events/new', 'Configurar Evento', 'event_available', 16, now()),
-(17, 6, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, now());
+(17, 6, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, now()),
+(18, NULL, 1, '/bodega/dashboard', 'Gestor de Bodegas', 'inventory', 50, now()),
+(19, 18, 2, '/bodega/inventario', 'Inventario Actual', 'inventory_2', 51, now()),
+(20, 18, 2, '/bodega/entregas', 'Ayudas Entregadas', 'local_shipping', 52, now());
 
 -- Reset the sequence
-SELECT setval('menu_id_seq', 17);
+SELECT setval('menu_id_seq', 20);
 
 -- Master Data
 INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES 
@@ -526,7 +532,10 @@ INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES
 ('menu:leer', 'Permite leer la estructura del menú', 'Menu'),
 ('menu:actualizar', 'Permite modificar ítems de menú existentes', 'Menu'),
 ('menu:eliminar', 'Permite eliminar ítems de menú', 'Menu'),
-('menu:asignar_permisos', 'Permite asignar y revocar permisos a ítems de menú', 'Menu');
+('menu:asignar_permisos', 'Permite asignar y revocar permisos a ítems de menú', 'Menu'),
+('bodega:crear', 'Permite añadir inventario a la bodega', 'Bodega'),
+('bodega:leer', 'Permite consultar el inventario y entregas', 'Bodega'),
+('bodega:actualizar', 'Permite actualizar el inventario y despachar ayudas', 'Bodega');
 
 INSERT INTO public.organizaciones (nombre_organizacion, nit, direccion, telefono, activa, fecha_creacion, fecha_actualizacion) VALUES ('GlobalCorp', '800.123.456-7', 'Calle Falsa 123', '3001234567', true, now(), now());
 INSERT INTO public.roles (organizacion_id, nombre_rol, descripcion, fecha_creacion) VALUES (1, 'ADMIN_GLOBAL', 'Administrador global del sistema con acceso a todas las organizaciones.', now());
