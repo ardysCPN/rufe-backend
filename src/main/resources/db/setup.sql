@@ -381,6 +381,17 @@ update
     on
     public.integrantes_hogar for each row execute function actualizar_fecha_modificacion();
 
+-- public.evidencias_rufe definition
+CREATE TABLE public.evidencias_rufe (
+	id bigserial NOT NULL,
+	registro_rufe_id int8 NOT NULL,
+	tipo_evidencia varchar(50) DEFAULT 'FOTO_CENSO',
+	foto_url varchar(500) NOT NULL,
+	fecha_carga timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT evidencias_rufe_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_evidencia_rufe FOREIGN KEY (registro_rufe_id) REFERENCES public.registros_rufe(id) ON DELETE CASCADE
+);
+
 -- public.ayuda_catalogo definition
 CREATE TABLE public.ayuda_catalogo (
 	id serial4 NOT NULL,
