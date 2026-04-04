@@ -2,6 +2,7 @@ package co.rufe.rufe.service.impl;
 
 import co.rufe.rufe.dao.IRegistroRufeDao;
 import co.rufe.rufe.dto.rufe.*;
+import co.rufe.rufe.exception.ResourceNotFoundException;
 import co.rufe.rufe.exception.DuplicateResourceException;
 import co.rufe.rufe.exception.BusinessRuleException;
 import co.rufe.rufe.model.*;
@@ -11,9 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -59,23 +59,25 @@ public class RegistroRufeServiceImpl implements IRegistroRufeService {
 
         RegistroRufe savedRegistro = registroRufeDao.save(registro);
 
-        for (IntegranteHogarRequest integranteReq : request.getIntegrantes()) {
-            IntegranteHogar integrante = IntegranteHogar.builder()
-                    .registroRufeId(savedRegistro.getId())
-                    .clienteId(integranteReq.getClienteId())
-                    .registroRufeClienteId(request.getClienteId())
-                    .nombres(integranteReq.getNombres())
-                    .apellidos(integranteReq.getApellidos())
-                    .tipoDocumentoId(integranteReq.getTipoDocumentoId())
-                    .numeroDocumento(integranteReq.getNumeroDocumento())
-                    .fechaNacimiento(integranteReq.getFechaNacimiento())
-                    .parentescoId(integranteReq.getParentescoId())
-                    .generoId(integranteReq.getGeneroId())
-                    .pertenenciaEtnicaId(integranteReq.getPertenenciaEtnicaId())
-                    .telefono(integranteReq.getTelefono())
-                    .build();
+        if (request.getIntegrantes() != null) {
+            for (IntegranteHogarRequest integranteReq : request.getIntegrantes()) {
+                IntegranteHogar integrante = IntegranteHogar.builder()
+                        .registroRufeId(savedRegistro.getId())
+                        .clienteId(integranteReq.getClienteId())
+                        .registroRufeClienteId(request.getClienteId())
+                        .nombres(integranteReq.getNombres())
+                        .apellidos(integranteReq.getApellidos())
+                        .tipoDocumentoId(integranteReq.getTipoDocumentoId())
+                        .numeroDocumento(integranteReq.getNumeroDocumento())
+                        .fechaNacimiento(integranteReq.getFechaNacimiento())
+                        .parentescoId(integranteReq.getParentescoId())
+                        .generoId(integranteReq.getGeneroId())
+                        .pertenenciaEtnicaId(integranteReq.getPertenenciaEtnicaId())
+                        .telefono(integranteReq.getTelefono())
+                        .build();
 
-            registroRufeDao.saveIntegrante(integrante);
+                registroRufeDao.saveIntegrante(integrante);
+            }
         }
 
         if (request.getBienesAfectados() != null) {
@@ -118,22 +120,96 @@ public class RegistroRufeServiceImpl implements IRegistroRufeService {
                 .build();
     }
 
-    private void validateIntegrantes(List<IntegranteHogarRequest> integrantes, Long eventoId) {
-        if (integrantes == null || integrantes.isEmpty()) {
-            throw new IllegalArgumentException("El registro debe tener al menos un integrante.");
+    @Override
+    public List<RegistroRufeResponse> listarTodos(Long organizacionId, boolean isAdmin) {
+        log.info("Listando registros RUFE. OrganizacionId: {}, IsAdmin: {}", organizacionId, isAdmin);
+        List<RegistroRufe> registros = isAdmin ? registroRufeDao.findAll()
+                : registroRufeDao.findAllByOrganizacionId(organizacionId);
+
+        return registros.stream()
+                .map(this::toSimpleResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public RegistroRufeResponse obtenerPorId(Long id, Long organizacionId, boolean isAdmin) {
+        log.info("Consultando registro RUFE ID: {}. OrganizacionId: {}, IsAdmin: {}", id, organizacionId, isAdmin);
+        RegistroRufe registro = registroRufeDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Registro RUFE no encontrado."));
+
+        if (!isAdmin && !registro.getOrganizacionId().equals(organizacionId)) {
+            log.warn("Intento de acceso no autorizado al RUFE ID {} por organización {}", id, organizacionId);
+            throw new co.rufe.rufe.exception.AuthorizationException("No tiene permisos para ver este registro.");
         }
 
-        Set<String> documentosEnRequest = new HashSet<>();
-        for (IntegranteHogarRequest i : integrantes) {
-            if (i.getNumeroDocumento() != null && !documentosEnRequest.add(i.getNumeroDocumento())) {
-                throw new BusinessRuleException(
-                        "El documento " + i.getNumeroDocumento() + " está duplicado internamente.");
-            }
-            if (i.getNumeroDocumento() != null
-                    && registroRufeDao.existsByNumeroDocumentoAndEventoId(i.getNumeroDocumento(), eventoId)) {
-                throw new BusinessRuleException(
-                        "El integrante con documento " + i.getNumeroDocumento() + " ya existe en este evento.");
+        return toSimpleResponse(registro);
+    }
+
+    private RegistroRufeResponse toSimpleResponse(RegistroRufe registro) {
+        return RegistroRufeResponse.builder()
+                .id(registro.getId())
+                .clienteId(registro.getClienteId())
+                .fechaRegistro(registro.getFechaRegistro())
+                .eventoId(registro.getEventoId())
+                .tipoEventoId(registro.getTipoEventoId())
+                .corregimiento(registro.getCorregimiento())
+                .veredaSectorBarrio(registro.getVeredaSectorBarrio())
+                .direccion(registro.getDireccion())
+                .totalIntegrantes(registroRufeDao.countIntegrantesByRegistroId(registro.getId()))
+                .estado("SINCRONIZADO")
+                .build();
+    }
+
+    private void validateIntegrantes(List<IntegranteHogarRequest> integrantes, Long eventoId) {
+        if (integrantes == null || integrantes.isEmpty()) {
+            throw new BusinessRuleException("El registro debe tener al menos un integrante.");
+        }
+        for (IntegranteHogarRequest integrante : integrantes) {
+            if (registroRufeDao.existsByNumeroDocumentoAndEventoId(integrante.getNumeroDocumento(), eventoId)) {
+                throw new DuplicateResourceException(
+                        "El integrante con documento " + integrante.getNumeroDocumento()
+                                + " ya está registrado en este evento.");
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public void actualizarRegistro(Long id, RegistroRufeCreateRequest request, Long organizacionId, boolean isAdmin) {
+        log.info("Actualizando registro RUFE ID: {}. OrganizacionId: {}, IsAdmin: {}", id, organizacionId, isAdmin);
+        RegistroRufe registro = registroRufeDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Registro RUFE no encontrado."));
+
+        if (!isAdmin && !registro.getOrganizacionId().equals(organizacionId)) {
+            throw new co.rufe.rufe.exception.AuthorizationException("No tiene permisos para editar este registro.");
+        }
+
+        // Actualizar campos permitidos
+        registro.setTipoEventoId(request.getTipoEventoId());
+        registro.setTipoUbicacionBienId(request.getTipoUbicacionBienId());
+        registro.setCorregimiento(request.getCorregimiento());
+        registro.setVeredaSectorBarrio(request.getVeredaSectorBarrio());
+        registro.setDireccion(request.getDireccion());
+        registro.setTipoAlojamientoActualId(request.getTipoAlojamientoActualId());
+        registro.setLugarHabitualResidencia(request.getLugarHabitualResidencia());
+        registro.setEvacuadoFueraResidencia(request.getEvacuadoFueraResidencia());
+        registro.setObservaciones(request.getObservaciones());
+        registro.setVoBoCmgrd(request.getVoBoCmgrd());
+
+        registroRufeDao.update(registro);
+    }
+
+    @Override
+    @Transactional
+    public void eliminarRegistro(Long id, Long organizacionId, boolean isAdmin) {
+        log.info("Eliminando registro RUFE ID: {}. OrganizacionId: {}, IsAdmin: {}", id, organizacionId, isAdmin);
+        RegistroRufe registro = registroRufeDao.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Registro RUFE no encontrado o ya eliminado."));
+
+        if (!isAdmin && !registro.getOrganizacionId().equals(organizacionId)) {
+            throw new co.rufe.rufe.exception.AuthorizationException("No tiene permisos para eliminar este registro.");
+        }
+
+        registroRufeDao.deleteById(id);
     }
 }

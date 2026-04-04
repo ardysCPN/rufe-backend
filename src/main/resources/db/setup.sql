@@ -1,6 +1,9 @@
 -- Database Startup Script
 -- This script contains DDL (tables, triggers, functions) and DML (initial data)
 
+-- Install PostGIS Extension for Geolocation features (Important para tablas como 'evento_real')
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 -- ==================== 0. Helper Function ====================
 CREATE OR REPLACE FUNCTION public.actualizar_fecha_modificacion()
  RETURNS trigger
@@ -154,6 +157,7 @@ CREATE TABLE public.eventos (
 	departamento varchar(100) NULL,
 	municipio varchar(100) NULL,
 	descripcion text NULL,
+	zona_afectacion geometry(Polygon, 4326) NULL,
 	fecha_creacion timestamp DEFAULT now() NOT NULL,
 	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
 	fecha_eliminacion timestamp NULL,
@@ -161,6 +165,7 @@ CREATE TABLE public.eventos (
 	CONSTRAINT eventos_pkey PRIMARY KEY (id),
 	CONSTRAINT eventos_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
 );
+CREATE INDEX idx_eventos_organizacion_id ON public.eventos(organizacion_id);
 
 -- Triggers for eventos
 create trigger set_timestamp_eventos before
@@ -188,6 +193,7 @@ CREATE TABLE public.roles (
 	CONSTRAINT roles_pkey PRIMARY KEY (id),
 	CONSTRAINT roles_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
 );
+CREATE INDEX idx_roles_organizacion_id ON public.roles(organizacion_id);
 
 -- public.rol_permisos definition
 CREATE TABLE public.rol_permisos (
@@ -215,6 +221,7 @@ CREATE TABLE public.usuarios (
 	CONSTRAINT usuarios_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE RESTRICT,
 	CONSTRAINT usuarios_rol_id_fkey FOREIGN KEY (rol_id) REFERENCES public.roles(id) ON DELETE RESTRICT
 );
+CREATE INDEX idx_usuarios_organizacion_id ON public.usuarios(organizacion_id);
 
 -- Triggers for usuarios
 create trigger set_timestamp_usuarios before
@@ -245,6 +252,7 @@ CREATE TABLE public.audit_log (
 	CONSTRAINT audit_log_pkey PRIMARY KEY (id),
 	CONSTRAINT audit_log_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
 );
+CREATE INDEX idx_audit_log_organizacion_id ON public.audit_log(organizacion_id);
 
 -- public.registros_rufe definition
 CREATE TABLE public.registros_rufe (
@@ -267,6 +275,8 @@ CREATE TABLE public.registros_rufe (
 	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
 	fecha_eliminacion timestamp NULL,
 	tipo_evento_id int4 NULL,
+	ubicacion geometry(Point, 4326) NULL,
+	ubicacion_offline jsonb NULL,
 	CONSTRAINT registros_rufe_cliente_id_key UNIQUE (cliente_id),
 	CONSTRAINT registros_rufe_pkey PRIMARY KEY (id),
 	CONSTRAINT fk_registros_rufe_tipo_evento FOREIGN KEY (tipo_evento_id) REFERENCES public.evento(id),
@@ -276,6 +286,7 @@ CREATE TABLE public.registros_rufe (
 	CONSTRAINT registros_rufe_tipo_ubicacion_bien_id_fkey FOREIGN KEY (tipo_ubicacion_bien_id) REFERENCES public.tipo_ubicacion_bien(id),
 	CONSTRAINT registros_rufe_usuario_registrador_id_fkey FOREIGN KEY (usuario_registrador_id) REFERENCES public.usuarios(id)
 );
+CREATE INDEX idx_registros_rufe_organizacion_id ON public.registros_rufe(organizacion_id);
 CREATE INDEX idx_registros_rufe_tipo_evento ON public.registros_rufe USING btree (tipo_evento_id);
 
 -- Trigger for registros_rufe
@@ -370,6 +381,54 @@ update
     on
     public.integrantes_hogar for each row execute function actualizar_fecha_modificacion();
 
+-- public.evidencias_rufe definition
+CREATE TABLE public.evidencias_rufe (
+	id bigserial NOT NULL,
+	registro_rufe_id int8 NOT NULL,
+	tipo_evidencia varchar(50) DEFAULT 'FOTO_CENSO',
+	foto_url varchar(500) NOT NULL,
+	fecha_carga timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT evidencias_rufe_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_evidencia_rufe FOREIGN KEY (registro_rufe_id) REFERENCES public.registros_rufe(id) ON DELETE CASCADE
+);
+
+-- public.ayuda_catalogo definition
+CREATE TABLE public.ayuda_catalogo (
+	id serial4 NOT NULL,
+	nombre varchar(150) NOT NULL,
+	descripcion text NULL,
+	unidad_medida varchar(50) NOT NULL,
+	CONSTRAINT ayuda_catalogo_pkey PRIMARY KEY (id)
+);
+
+-- public.bodega_inventario definition
+CREATE TABLE public.bodega_inventario (
+	id bigserial NOT NULL,
+	organizacion_id int8 NOT NULL,
+	ayuda_catalogo_id int4 NOT NULL,
+	cantidad numeric(10,2) NOT NULL DEFAULT 0,
+	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT bodega_inventario_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_bodega_organizacion FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE,
+	CONSTRAINT fk_bodega_ayuda FOREIGN KEY (ayuda_catalogo_id) REFERENCES public.ayuda_catalogo(id)
+);
+
+-- public.ayudas_entregadas definition
+CREATE TABLE public.ayudas_entregadas (
+	id bigserial NOT NULL,
+	organizacion_id int8 NOT NULL,
+	registro_rufe_id int8 NOT NULL,
+	ayuda_catalogo_id int4 NOT NULL,
+	cantidad numeric(10,2) NOT NULL,
+	firma_digital text NULL,
+	evidencia_foto_url varchar(500) NULL,
+	fecha_entrega timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT ayudas_entregadas_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_ayuda_entrega_org FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE,
+	CONSTRAINT fk_ayuda_entrega_rufe FOREIGN KEY (registro_rufe_id) REFERENCES public.registros_rufe(id),
+	CONSTRAINT fk_ayuda_entrega_cat FOREIGN KEY (ayuda_catalogo_id) REFERENCES public.ayuda_catalogo(id)
+);
+
 -- ==================== 2. Inserts ====================
 
 INSERT INTO tipo_ubicacion_bien (nombre) VALUES ('URBANO'), ('RURAL');
@@ -457,10 +516,14 @@ INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, i
 (14, 4, 2, '/tools/sub', 'Herramientas sub', 'panel_settings', 111, now()),
 (15, 4, 2, '/tools/sync-status', 'Estado de Sincronización', 'sync', 112, now()),
 (16, 5, 2, '/events/new', 'Configurar Evento', 'event_available', 16, now()),
-(17, 6, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, now());
+(17, 6, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, now()),
+(18, NULL, 1, '/bodega/dashboard', 'Gestor de Bodegas', 'inventory', 50, now()),
+(19, 18, 2, '/bodega/inventario', 'Inventario Actual', 'inventory_2', 51, now()),
+(20, 18, 2, '/bodega/entregas', 'Ayudas Entregadas', 'local_shipping', 52, now()),
+(21, 18, 2, '/bodega/planificacion', 'Planificación de Entregas', 'assignment', 53, now());
 
 -- Reset the sequence
-SELECT setval('menu_id_seq', 17);
+SELECT setval('menu_id_seq', 21);
 
 -- Master Data
 INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES 
@@ -481,7 +544,11 @@ INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES
 ('menu:leer', 'Permite leer la estructura del menú', 'Menu'),
 ('menu:actualizar', 'Permite modificar ítems de menú existentes', 'Menu'),
 ('menu:eliminar', 'Permite eliminar ítems de menú', 'Menu'),
-('menu:asignar_permisos', 'Permite asignar y revocar permisos a ítems de menú', 'Menu');
+('menu:asignar_permisos', 'Permite asignar y revocar permisos a ítems de menú', 'Menu'),
+('bodega:crear', 'Permite añadir inventario a la bodega', 'Bodega'),
+('bodega:leer', 'Permite consultar el inventario y entregas', 'Bodega'),
+('bodega:actualizar', 'Permite actualizar el inventario y despachar ayudas', 'Bodega'),
+('bodega:planear', 'Permite planificar distribuciones masivas de ayudas', 'Bodega');
 
 INSERT INTO public.organizaciones (nombre_organizacion, nit, direccion, telefono, activa, fecha_creacion, fecha_actualizacion) VALUES ('GlobalCorp', '800.123.456-7', 'Calle Falsa 123', '3001234567', true, now(), now());
 INSERT INTO public.roles (organizacion_id, nombre_rol, descripcion, fecha_creacion) VALUES (1, 'ADMIN_GLOBAL', 'Administrador global del sistema con acceso a todas las organizaciones.', now());

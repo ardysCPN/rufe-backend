@@ -27,15 +27,18 @@ import lombok.extern.slf4j.Slf4j;
 public class CatalogoRufeController {
 
     private final ICatalogoRufeService catalogoRufeService;
+    private final co.rufe.rufe.security.SecurityUtils securityUtils;
 
-    public CatalogoRufeController(ICatalogoRufeService catalogoRufeService) {
+    public CatalogoRufeController(ICatalogoRufeService catalogoRufeService,
+            co.rufe.rufe.security.SecurityUtils securityUtils) {
         this.catalogoRufeService = catalogoRufeService;
+        this.securityUtils = securityUtils;
     }
 
     // --- Endpoints para CRUD genérico ---
 
     @PostMapping("/{catalogo}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN_GLOBAL') or hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
     public ResponseEntity<Void> createItem(@PathVariable String catalogo, @RequestBody CatalogoItemRequest request) {
         log.info("Solicitud para crear item en catálogo {}: {}", catalogo, request.getNombre());
         catalogoRufeService.createItem(catalogo, request.getNombre());
@@ -43,7 +46,7 @@ public class CatalogoRufeController {
     }
 
     @PutMapping("/{catalogo}/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN_GLOBAL') or hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
     public ResponseEntity<Void> updateItem(@PathVariable String catalogo, @PathVariable Integer id,
             @RequestBody CatalogoItemRequest request) {
         log.info("Solicitud para actualizar item en catálogo {} con ID {}: {}", catalogo, id, request.getNombre());
@@ -52,7 +55,7 @@ public class CatalogoRufeController {
     }
 
     @DeleteMapping("/{catalogo}/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN_GLOBAL') or hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
     public ResponseEntity<Void> deleteItem(@PathVariable String catalogo, @PathVariable Integer id) {
         log.info("Solicitud para eliminar item en catálogo {} con ID {}", catalogo, id);
         catalogoRufeService.deleteItem(catalogo, id);

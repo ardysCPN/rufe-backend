@@ -42,19 +42,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
                 String username = jwtTokenProvider.getUsername(token);
-                // Long organizacionId = jwtTokenProvider.getOrganizacionIdFromJwt(token); // Si
-                // el organizacionId está en el JWT
+                Long organizacionId = jwtTokenProvider.getOrganizacionIdFromJwt(token);
+                if (organizacionId != null) {
+                    TenantContext.setCurrentOrganizationId(organizacionId);
+                    log.debug("TenantContext establecido desde el JWT: {}", organizacionId);
+                }
 
                 // 1. Cargar UserDetails para tener el Principal (usuario) completo y verificar
                 // estado (enabled, etc.)
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
                 // 2. Obtener las autoridades (permisos) DIRECTAMENTE del JWT.
-                // Esto es crucial porque el JWT ya tiene los permisos "aplanados" y correctos
-                // (ej: "organizaciones:crear"),
-                // mientras que userDetails.getAuthorities() podría estar devolviendo solo roles
-                // o una estructura diferente
-                // desde la base de datos que no coincide con los @PreAuthorize.
                 String authoritiesString = jwtTokenProvider.getAuthoritiesFromJwt(token);
 
                 Collection<? extends GrantedAuthority> authorities;
@@ -64,25 +62,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .map(SimpleGrantedAuthority::new)
                             .collect(Collectors.toList());
                 } else {
-                    authorities = userDetails.getAuthorities(); // Fallback si el token no tiene autoridades (raro)
+                    authorities = userDetails.getAuthorities();
                 }
-
-                // El TenantContext.setCurrentOrganizationId() ya debería haber sido llamado
-                // dentro de CustomUserDetailsService.loadUserByUsername(username).
-                // Si no es el caso, deberías obtener el organizacionId del userDetails o del
-                // JWT y establecerlo aquí.
-                // Ejemplo: TenantContext.setCurrentOrganizationId(((CustomUserDetails)
-                // userDetails).getOrganizacionId());
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails,
-                        null, // La contraseña ya no es necesaria aquí
-                        authorities // <--- USAR LAS AUTORIDADES DEL JWT
-                );
+                        null,
+                        authorities);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 log.debug("Usuario {} autenticado con las autoridades del JWT: {}", username, authoritiesString);
+
+                // El TenantContext ya se estableció arriba desde el JWT.
+                // loadUserByUsername(username) también lo establece, pero obtenerlo del JWT
+                // es la fuente preferida para evitar consultas innecesarias si se puede.
             }
             // Continuar con la cadena de filtros
             filterChain.doFilter(request, response);

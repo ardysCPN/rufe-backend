@@ -20,9 +20,11 @@ import java.util.List;
 public class EventoRealController {
 
     private final IEventoRealService eventoService;
+    private final co.rufe.rufe.security.SecurityUtils securityUtils;
 
-    public EventoRealController(IEventoRealService eventoService) {
+    public EventoRealController(IEventoRealService eventoService, co.rufe.rufe.security.SecurityUtils securityUtils) {
         this.eventoService = eventoService;
+        this.securityUtils = securityUtils;
     }
 
     @PostMapping
@@ -52,7 +54,8 @@ public class EventoRealController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long id) {
         log.info("Consultando evento ID: {} para org: {}", id, userDetails.getOrganizacionId());
-        EventoRealResponse response = eventoService.getEventoById(id, userDetails.getOrganizacionId());
+        boolean isAdmin = securityUtils.isGlobalAdmin();
+        EventoRealResponse response = eventoService.getEventoById(id, userDetails.getOrganizacionId(), isAdmin);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -61,7 +64,8 @@ public class EventoRealController {
     public ResponseEntity<List<EventoRealResponse>> getAllEventos(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("Listando eventos para org: {}", userDetails.getOrganizacionId());
-        List<EventoRealResponse> response = eventoService.getAllEventos(userDetails.getOrganizacionId());
+        boolean isAdmin = securityUtils.isGlobalAdmin();
+        List<EventoRealResponse> response = eventoService.getAllEventos(userDetails.getOrganizacionId(), isAdmin);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

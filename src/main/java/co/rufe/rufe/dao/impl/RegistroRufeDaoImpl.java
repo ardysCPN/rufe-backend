@@ -12,6 +12,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -158,6 +159,115 @@ public class RegistroRufeDaoImpl implements IRegistroRufeDao {
 
     @Override
     public Optional<RegistroRufe> findById(Long id) {
-        return Optional.empty(); // Not implemented yet
+        String sql = "SELECT * FROM registros_rufe WHERE id = :id AND fecha_eliminacion IS NULL";
+        MapSqlParameterSource params = new MapSqlParameterSource("id", id);
+        try {
+            RegistroRufe registro = namedParameterJdbcTemplate.queryForObject(sql, params, this::mapRowToRegistroRufe);
+            return Optional.ofNullable(registro);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public List<RegistroRufe> findAll() {
+        String sql = "SELECT * FROM registros_rufe WHERE fecha_eliminacion IS NULL ORDER BY fecha_registro DESC";
+        return namedParameterJdbcTemplate.query(sql, this::mapRowToRegistroRufe);
+    }
+
+    @Override
+    public List<RegistroRufe> findAllByOrganizacionId(Long organizacionId) {
+        String sql = "SELECT * FROM registros_rufe WHERE organizacion_id = :organizacionId AND fecha_eliminacion IS NULL ORDER BY fecha_registro DESC";
+        MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
+        return namedParameterJdbcTemplate.query(sql, params, this::mapRowToRegistroRufe);
+    }
+
+    private RegistroRufe mapRowToRegistroRufe(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
+        return RegistroRufe.builder()
+                .id(rs.getLong("id"))
+                .organizacionId(rs.getLong("organizacion_id"))
+                .eventoId(rs.getLong("evento_id"))
+                .tipoEventoId(rs.getLong("tipo_evento_id"))
+                .usuarioRegistradorId(rs.getLong("usuario_registrador_id"))
+                .clienteId(rs.getString("cliente_id"))
+                .fechaRegistro(rs.getTimestamp("fecha_registro").toLocalDateTime())
+                .tipoUbicacionBienId(rs.getInt("tipo_ubicacion_bien_id"))
+                .corregimiento(rs.getString("corregimiento"))
+                .veredaSectorBarrio(rs.getString("vereda_sector_barrio"))
+                .direccion(rs.getString("direccion"))
+                .tipoAlojamientoActualId(rs.getInt("tipo_alojamiento_actual_id"))
+                .lugarHabitualResidencia(rs.getString("lugar_habitual_residencia"))
+                .evacuadoFueraResidencia(rs.getBoolean("evacuado_fuera_residencia"))
+                .observaciones(rs.getString("observaciones"))
+                .voBoCmgrd(rs.getString("vo_bo_cmgrd"))
+                .fechaCreacion(rs.getTimestamp("fecha_creacion").toLocalDateTime())
+                .fechaActualizacion(rs.getTimestamp("fecha_actualizacion").toLocalDateTime())
+                .build();
+    }
+
+    @Override
+    public List<java.util.Map<String, Object>> obtenerDatosReporteExcel(Long organizacionId, boolean isAdmin) {
+        String sql = "SELECT r.id AS \"ID Registro\", r.cliente_id AS \"Nro Radicado\", r.fecha_registro AS \"Fecha\", " +
+                     "r.direccion AS \"Direccion\", r.corregimiento AS \"Corregimiento\", r.vereda_sector_barrio AS \"Barrio/Vereda\", " +
+                     "u.nombre_completo AS \"Registrado Por\", " +
+                     "o.nombre_organizacion AS \"Organizacion\" " +
+                     "FROM registros_rufe r " +
+                     "LEFT JOIN usuarios u ON r.usuario_registrador_id = u.id " +
+                     "LEFT JOIN organizaciones o ON r.organizacion_id = o.id ";
+                     
+        if (!isAdmin) {
+            sql += " WHERE r.organizacion_id = :organizacionId ORDER BY r.id DESC";
+            MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
+            return namedParameterJdbcTemplate.queryForList(sql, params);
+        } else {
+            sql += " ORDER BY r.id DESC";
+            return namedParameterJdbcTemplate.queryForList(sql, new MapSqlParameterSource());
+        }
+    }
+
+    @Override
+    public void update(RegistroRufe registro) {
+        String sql = "UPDATE registros_rufe SET " +
+                "tipo_evento_id = :tipoEventoId, " +
+                "tipo_ubicacion_bien_id = :tipoUbicacionBienId, " +
+                "corregimiento = :corregimiento, " +
+                "vereda_sector_barrio = :veredaSectorBarrio, " +
+                "direccion = :direccion, " +
+                "tipo_alojamiento_actual_id = :tipoAlojamientoActualId, " +
+                "lugar_habitual_residencia = :lugarHabitualResidencia, " +
+                "evacuado_fuera_residencia = :evacuadoFueraResidencia, " +
+                "observaciones = :observaciones, " +
+                "vo_bo_cmgrd = :voBoCmgrd, " +
+                "fecha_actualizacion = NOW() " +
+                "WHERE id = :id";
+
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("id", registro.getId());
+        params.addValue("tipoEventoId", registro.getTipoEventoId());
+        params.addValue("tipoUbicacionBienId", registro.getTipoUbicacionBienId());
+        params.addValue("corregimiento", registro.getCorregimiento());
+        params.addValue("veredaSectorBarrio", registro.getVeredaSectorBarrio());
+        params.addValue("direccion", registro.getDireccion());
+        params.addValue("tipoAlojamientoActualId", registro.getTipoAlojamientoActualId());
+        params.addValue("lugarHabitualResidencia", registro.getLugarHabitualResidencia());
+        params.addValue("evacuadoFueraResidencia", registro.getEvacuadoFueraResidencia());
+        params.addValue("observaciones", registro.getObservaciones());
+        params.addValue("voBoCmgrd", registro.getVoBoCmgrd());
+
+        namedParameterJdbcTemplate.update(sql, params);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        String sql = "UPDATE registros_rufe SET fecha_eliminacion = NOW() WHERE id = :id";
+        namedParameterJdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
+    }
+
+    @Override
+    public int countIntegrantesByRegistroId(Long registroId) {
+        String sql = "SELECT COUNT(*) FROM integrantes_hogar WHERE registro_rufe_id = :id AND fecha_eliminacion IS NULL";
+        MapSqlParameterSource params = new MapSqlParameterSource("id", registroId);
+        Integer count = namedParameterJdbcTemplate.queryForObject(sql, params, Integer.class);
+        return count != null ? count : 0;
     }
 }

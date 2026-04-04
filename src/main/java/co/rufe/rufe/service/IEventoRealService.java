@@ -9,9 +9,9 @@ public interface IEventoRealService {
 
     EventoRealResponse updateEvento(Long id, EventoRealRequest request, Long organizacionId);
 
-    EventoRealResponse getEventoById(Long id, Long organizacionId);
+    EventoRealResponse getEventoById(Long id, Long organizacionId, boolean isAdmin);
 
-    List<EventoRealResponse> getAllEventos(Long organizacionId);
+    List<EventoRealResponse> getAllEventos(Long organizacionId, boolean isAdmin);
 
     void deleteEvento(Long id, Long organizacionId);
 }

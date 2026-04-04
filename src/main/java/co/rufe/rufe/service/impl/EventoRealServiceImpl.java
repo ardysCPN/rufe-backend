@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -48,9 +49,15 @@ public class EventoRealServiceImpl implements IEventoRealService {
     @Override
     @Transactional
     public EventoRealResponse updateEvento(Long id, EventoRealRequest request, Long organizacionId) {
-        EventoReal existing = eventoDao.findByIdAndOrganizacionId(id, organizacionId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Evento no encontrado o no pertenece a la organización."));
+        // Simple bypass: if we want strict org ownership for updates even for admins,
+        // keep search as is.
+        // But usually Admin can update anything. Let's stick to org unless it's a list.
+        // Actually the prompt says "Admin can see everything".
+        EventoReal existing = (organizacionId == null)
+                ? eventoDao.findById(id).orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado."))
+                : eventoDao.findByIdAndOrganizacionId(id, organizacionId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Evento no encontrado o no pertenece a la organización."));
 
         existing.setNombreEvento(request.getNombreEvento());
         existing.setTipoEvento(request.getTipoEvento());
@@ -58,25 +65,24 @@ public class EventoRealServiceImpl implements IEventoRealService {
         existing.setDepartamento(request.getDepartamento());
         existing.setMunicipio(request.getMunicipio());
         existing.setDescripcion(request.getDescripcion());
-        // clienteId usually not updated as it's an external key
 
         eventoDao.update(existing);
-
-        // Fetch again to have updated timestamps if needed, or just return modified
-        // object
         return toResponse(existing);
     }
 
     @Override
-    public EventoRealResponse getEventoById(Long id, Long organizacionId) {
-        EventoReal evento = eventoDao.findByIdAndOrganizacionId(id, organizacionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado."));
+    public EventoRealResponse getEventoById(Long id, Long organizacionId, boolean isAdmin) {
+        EventoReal evento = isAdmin
+                ? eventoDao.findById(id).orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado."))
+                : eventoDao.findByIdAndOrganizacionId(id, organizacionId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado."));
         return toResponse(evento);
     }
 
     @Override
-    public List<EventoRealResponse> getAllEventos(Long organizacionId) {
-        return eventoDao.findAllByOrganizacionId(organizacionId).stream()
+    public List<EventoRealResponse> getAllEventos(Long organizacionId, boolean isAdmin) {
+        List<EventoReal> list = isAdmin ? eventoDao.findAll() : eventoDao.findAllByOrganizacionId(organizacionId);
+        return list.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }

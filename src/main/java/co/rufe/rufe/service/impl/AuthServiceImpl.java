@@ -1,7 +1,6 @@
 package co.rufe.rufe.service.impl;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.AuthenticationManager; // Nuevo
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken; // Nuevo
@@ -100,7 +99,8 @@ public class AuthServiceImpl implements IAuthService {
                 usuarioDetails.getId(),
                 usuarioDetails.getRolId(),
                 usuarioDetails.getRolNombre(),
-                usuarioDetails.getNombreCompleto());
+                usuarioDetails.getNombreCompleto(),
+                usuarioDetails.getOrganizacionId());
 
         log.info("Login exitoso para usuario: {}", request.getEmail());
 

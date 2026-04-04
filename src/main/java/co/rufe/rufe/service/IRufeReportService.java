@@ -4,6 +4,6 @@ public interface IRufeReportService {
 
     byte[] generarReporteRufe(Long eventoId);
 
-    byte[] generarReporteRufeExcel(Long eventoId);
+    byte[] generarReporteRufeExcel(Long organizacionId, boolean isAdmin);
 
 }

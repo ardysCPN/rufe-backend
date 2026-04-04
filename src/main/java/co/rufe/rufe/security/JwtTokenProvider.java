@@ -38,7 +38,7 @@ public class JwtTokenProvider {
     // Modificado para aceptar Authentication, Collection<GrantedAuthority> y
     // detalles del usuario
     public String generateToken(Authentication authentication, Collection<? extends GrantedAuthority> authorities,
-            Long userId, Long rolId, String rolNombre, String nombreCompleto) {
+            Long userId, Long rolId, String rolNombre, String nombreCompleto, Long organizacionId) {
         String email = authentication.getName(); // El subject es el email
 
         // Convertir las autoridades a una cadena separada por comas
@@ -56,6 +56,7 @@ public class JwtTokenProvider {
                 .claim("rol_id", rolId)
                 .claim("rol", rolNombre)
                 .claim("nombre", nombreCompleto)
+                .claim("org_id", organizacionId) // Cambiado a org_id por brevedad y claridad
                 .issuedAt(currentDate)
                 .expiration(expireDate)
                 .signWith(getSigningKey())
@@ -83,15 +84,13 @@ public class JwtTokenProvider {
                 .parseSignedClaims(token)
                 .getPayload();
 
-        Object organizacionIdObj = claims.get("organizacionId"); // Asume que "organizacionId" es un claim
+        Object organizacionIdObj = claims.get("org_id");
         if (organizacionIdObj instanceof Number) {
             return ((Number) organizacionIdObj).longValue();
         }
-        // Si no se encuentra o no es un número, podrías lanzar una excepción o devolver
-        // null
-        log.warn("Claim 'organizacionId' no encontrado o no es un número válido en el token JWT: {}",
+        log.warn("Claim 'org_id' no encontrado o no es un número válido en el token JWT: {}",
                 organizacionIdObj);
-        return null; // O lanza una IllegalArgumentException
+        return null;
     }
 
     // Obtiene las autoridades (roles y permisos) del JWT como una cadena

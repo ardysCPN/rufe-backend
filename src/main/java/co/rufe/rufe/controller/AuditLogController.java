@@ -18,13 +18,15 @@ import java.util.List;
 public class AuditLogController {
 
     private final IAuditLogService auditLogService;
+    private final co.rufe.rufe.security.SecurityUtils securityUtils;
 
-    public AuditLogController(IAuditLogService auditLogService) {
+    public AuditLogController(IAuditLogService auditLogService, co.rufe.rufe.security.SecurityUtils securityUtils) {
         this.auditLogService = auditLogService;
+        this.securityUtils = securityUtils;
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN_GLOBAL') or hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
     public ResponseEntity<List<AuditLog>> getLogs(
             @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails) {
         log.info("Solicitud de auditoría para organización ID: {}", userDetails.getOrganizacionId());

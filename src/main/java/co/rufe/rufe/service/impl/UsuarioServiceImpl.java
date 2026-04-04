@@ -80,10 +80,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
     }
 
     @Override
-    public UsuarioResponse getUsuarioById(Long id) {
+    public UsuarioResponse getUsuarioById(Long id, Long organizacionId, boolean isAdmin) {
         log.debug("Buscando usuario con ID: {}", id);
-        Usuario usuario = usuarioDao.findById(id) // Este findById ya valida el tenant por TenantContext
+        Usuario usuario = usuarioDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
+
+        if (!isAdmin && !usuario.getOrganizacionId().equals(organizacionId)) {
+            throw new AuthorizationException("No tiene permisos para ver este usuario.");
+        }
+
         return UsuarioMapper.toResponse(usuario);
     }
 
@@ -102,26 +107,31 @@ public class UsuarioServiceImpl implements IUsuarioService {
     }
 
     @Override
-    public List<UsuarioResponse> getUsuariosByOrganizacionId(Long organizacionId) {
+    public List<UsuarioResponse> getUsuariosByOrganizacionId(Long organizacionId, boolean isAdmin) {
         log.debug("Obteniendo usuarios para organización ID: {}", organizacionId);
         if (!organizacionDao.existsById(organizacionId)) {
             throw new ResourceNotFoundException("Organización no encontrada con ID: " + organizacionId);
         }
-        return usuarioDao.findByOrganizacionIdWithDetails(organizacionId).stream()
+
+        List<co.rufe.rufe.model.UsuarioWithDetails> list = isAdmin ? usuarioDao.findAllWithDetails()
+                : usuarioDao.findByOrganizacionIdWithDetails(organizacionId);
+
+        return list.stream()
                 .map(UsuarioMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public UsuarioResponse updateUsuario(Long id, Long organizacionId, UsuarioRequest request) {
+    public UsuarioResponse updateUsuario(Long id, Long organizacionId, UsuarioRequest request, boolean isAdmin) {
         log.info("Actualizando usuario con ID {} para organización ID {}.", id, organizacionId);
 
-        Usuario existingUsuario = usuarioDao.findById(id) // Valida que el usuario exista y pertenezca al tenant actual
+        Usuario existingUsuario = usuarioDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
 
-        // Asegurarse de que el usuario pertenece a la organización correcta
-        if (!existingUsuario.getOrganizacionId().equals(organizacionId)) {
+        // Asegurarse de que el usuario pertenece a la organización correcta (salvo
+        // admin)
+        if (!isAdmin && !existingUsuario.getOrganizacionId().equals(organizacionId)) {
             throw new AuthorizationException(
                     "El usuario con ID " + id + " no pertenece a la organización ID " + organizacionId + ".");
         }
@@ -130,19 +140,18 @@ public class UsuarioServiceImpl implements IUsuarioService {
         if (!rolDao.existsById(request.getRolId())) {
             throw new ResourceNotFoundException("Rol no encontrado con ID: " + request.getRolId());
         }
-        rolDao.findById(request.getRolId()).ifPresent(rol -> {
-            if (!rol.getOrganizacionId().equals(organizacionId)) {
-                throw new IllegalArgumentException("El rol con ID " + request.getRolId()
-                        + " no pertenece a la organización con ID " + organizacionId + ".");
-            }
-        });
+        co.rufe.rufe.model.Rol nuevoRol = rolDao.findById(request.getRolId()).get();
+        if (!isAdmin && !nuevoRol.getOrganizacionId().equals(organizacionId)) {
+            throw new IllegalArgumentException("El rol con ID " + request.getRolId()
+                    + " no pertenece a la organización con ID " + organizacionId + ".");
+        }
 
         // Verificar si el nuevo email ya existe para esta organización (y no es el
         // mismo usuario)
         if (!existingUsuario.getEmail().equals(request.getEmail()) &&
-                usuarioDao.existsByOrganizacionIdAndEmail(organizacionId, request.getEmail())) {
+                usuarioDao.existsByOrganizacionIdAndEmail(existingUsuario.getOrganizacionId(), request.getEmail())) {
             throw new DuplicateResourceException("Ya existe otro usuario con el email '" + request.getEmail()
-                    + "' en la organización con ID: " + organizacionId);
+                    + "' en la organización.");
         }
 
         existingUsuario.setNombreCompleto(request.getNombreCompleto());
@@ -169,14 +178,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional
-    public void deleteUsuario(Long id, Long organizacionId) {
+    public void deleteUsuario(Long id, Long organizacionId, boolean isAdmin) {
         log.info("Intentando eliminar usuario con ID {} para organización ID {}.", id, organizacionId);
 
         Usuario existingUsuario = usuarioDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
 
-        // Asegurarse de que el usuario pertenece a la organización correcta
-        if (!existingUsuario.getOrganizacionId().equals(organizacionId)) {
+        // Asegurarse de que el usuario pertenece a la organización correcta (salvo
+        // admin)
+        if (!isAdmin && !existingUsuario.getOrganizacionId().equals(organizacionId)) {
             throw new AuthorizationException(
                     "El usuario con ID " + id + " no pertenece a la organización ID " + organizacionId + ".");
         }

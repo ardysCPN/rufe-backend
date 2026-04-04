@@ -16,4 +16,12 @@ public interface IRegistroRufeService {
      */
     RegistroRufeResponse crearRegistro(RegistroRufeCreateRequest request, Long usuarioRegistradorId,
             Long organizacionId);
+
+    java.util.List<RegistroRufeResponse> listarTodos(Long organizacionId, boolean isAdmin);
+
+    RegistroRufeResponse obtenerPorId(Long id, Long organizacionId, boolean isAdmin);
+
+    void actualizarRegistro(Long id, RegistroRufeCreateRequest request, Long organizacionId, boolean isAdmin);
+
+    void eliminarRegistro(Long id, Long organizacionId, boolean isAdmin);
 }

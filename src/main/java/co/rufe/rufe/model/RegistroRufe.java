@@ -30,6 +30,9 @@ public class RegistroRufe {
     private String observaciones;
     private String voBoCmgrd;
 
+    private String ubicacion; // WKT o GeoJSON representing Point
+    private String ubicacionOffline; // JSON payload for caching offline coordinates
+
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
     private LocalDateTime fechaEliminacion;

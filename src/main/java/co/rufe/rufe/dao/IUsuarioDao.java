@@ -19,7 +19,11 @@ public interface IUsuarioDao {
 
     List<Usuario> findByOrganizacionId(Long organizacionId);
 
+    List<Usuario> findAll();
+
     List<UsuarioWithDetails> findByOrganizacionIdWithDetails(Long organizacionId);
+
+    List<UsuarioWithDetails> findAllWithDetails();
 
     Usuario update(Usuario usuario);
 

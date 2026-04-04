@@ -19,9 +19,11 @@ import java.util.List;
 public class RolController {
 
     private final IRolService rolService;
+    private final co.rufe.rufe.security.SecurityUtils securityUtils;
 
-    public RolController(IRolService rolService) {
+    public RolController(IRolService rolService, co.rufe.rufe.security.SecurityUtils securityUtils) {
         this.rolService = rolService;
+        this.securityUtils = securityUtils;
     }
 
     @PostMapping
@@ -31,17 +33,19 @@ public class RolController {
             @Valid @RequestBody RolRequest request) {
         log.info("Solicitud para crear rol '{}' en organización ID: {}", request.getNombreRol(),
                 userDetails.getOrganizacionId());
+        // Solo administradores o si el usuario pertenece a la misma organización.
+        // El servicio rolService ya debería manejar el aislamiento, pero podemos añadir
+        // seguridad aquí si es necesario.
         RolResponse response = rolService.createRol(userDetails.getOrganizacionId(), request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/{rolId}")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<RolResponse> getRolById(@PathVariable Long rolId) {
+    @PreAuthorize("@securityUtils.isUserInRoleOrganization(#rolId, #userDetails.getOrganizacionId()) or @securityUtils.isGlobalAdmin()")
+    public ResponseEntity<RolResponse> getRolById(
+            @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
+            @PathVariable Long rolId) {
         log.info("Solicitud para obtener rol con ID {}", rolId);
-        // Nota: Idealmente validar que el rol pertenezca a la organizacion del usuario
-        // si
-        // se requiere aislamiento estricto
         RolResponse response = rolService.getRolById(rolId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

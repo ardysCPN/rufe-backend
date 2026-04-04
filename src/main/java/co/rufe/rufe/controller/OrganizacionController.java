@@ -18,31 +18,29 @@ import java.util.List;
 public class OrganizacionController {
 
     private final IOrganizacionService organizacionService;
+    private final co.rufe.rufe.security.SecurityUtils securityUtils;
 
-    public OrganizacionController(IOrganizacionService organizacionService) {
+    public OrganizacionController(IOrganizacionService organizacionService,
+            co.rufe.rufe.security.SecurityUtils securityUtils) {
         this.organizacionService = organizacionService;
+        this.securityUtils = securityUtils;
     }
 
     @PostMapping
     // Solo un ADMIN_GLOBAL puede crear nuevas organizaciones.
     // Permiso requerido: organizaciones:crear
-    // Solo un ADMIN_GLOBAL puede crear nuevas organizaciones.
-    // Permiso requerido: organizaciones:crear
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
     public ResponseEntity<OrganizacionResponse> createOrganizacion(@Valid @RequestBody OrganizacionRequest request) {
         log.info("Solicitud para crear una nueva organización: {}", request.getNombreOrganizacion());
         OrganizacionResponse response = organizacionService.createOrganizacion(request);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    // Permite a un ADMIN_GLOBAL leer cualquier organización, o a un usuario de esa
+    // organización leer la suya.
+    // Permiso requerido: organizaciones:leer
     @GetMapping("/{organizacionId}")
-    // Permite a un ADMIN_GLOBAL leer cualquier organización, o a un usuario de esa
-    // organización leer la suya.
-    // Permiso requerido: organizaciones:leer
-    // Permite a un ADMIN_GLOBAL leer cualquier organización, o a un usuario de esa
-    // organización leer la suya.
-    // Permiso requerido: organizaciones:leer
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityUtils.isUserInOrganization(#organizacionId) or @securityUtils.isGlobalAdmin()")
     public ResponseEntity<OrganizacionResponse> getOrganizacionById(@PathVariable Long organizacionId) {
         log.info("Solicitud para obtener organización con ID: {}", organizacionId);
         OrganizacionResponse response = organizacionService.getOrganizacionById(organizacionId);
@@ -53,10 +51,7 @@ public class OrganizacionController {
     // Permite a un ADMIN_GLOBAL leer cualquier organización por nombre, o a un
     // usuario de esa organización leer la suya.
     // Permiso requerido: organizaciones:leer
-    // Permite a un ADMIN_GLOBAL leer cualquier organización por nombre, o a un
-    // usuario de esa organización leer la suya.
-    // Permiso requerido: organizaciones:leer
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityUtils.isUserInOrganizationByName(#nombreOrganizacion) or @securityUtils.isGlobalAdmin()")
     public ResponseEntity<OrganizacionResponse> getOrganizacionByNombre(@PathVariable String nombreOrganizacion) {
         log.info("Solicitud para obtener organización con nombre: {}", nombreOrganizacion);
         OrganizacionResponse response = organizacionService.getOrganizacionByNombre(nombreOrganizacion);
@@ -66,9 +61,7 @@ public class OrganizacionController {
     @GetMapping
     // Solo un ADMIN_GLOBAL debería poder listar TODAS las organizaciones.
     // Permiso requerido: organizaciones:listar
-    // Solo un ADMIN_GLOBAL debería poder listar TODAS las organizaciones.
-    // Permiso requerido: organizaciones:listar
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
     public ResponseEntity<List<OrganizacionResponse>> getAllOrganizaciones() {
         log.info("Solicitud para obtener todas las organizaciones.");
         List<OrganizacionResponse> responses = organizacionService.getAllOrganizaciones();
@@ -79,10 +72,7 @@ public class OrganizacionController {
     // Permite a un ADMIN_GLOBAL actualizar cualquier organización, o a un usuario
     // de esa organización actualizar la suya.
     // Permiso requerido: organizaciones:actualizar
-    // Permite a un ADMIN_GLOBAL actualizar cualquier organización, o a un usuario
-    // de esa organización actualizar la suya.
-    // Permiso requerido: organizaciones:actualizar
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityUtils.isUserInOrganization(#organizacionId) or @securityUtils.isGlobalAdmin()")
     public ResponseEntity<OrganizacionResponse> updateOrganizacion(@PathVariable Long organizacionId,
             @Valid @RequestBody OrganizacionRequest request) {
         log.info("Solicitud para actualizar organización con ID: {}", organizacionId);
@@ -93,9 +83,7 @@ public class OrganizacionController {
     @DeleteMapping("/{organizacionId}")
     // Solo un ADMIN_GLOBAL puede eliminar organizaciones.
     // Permiso requerido: organizaciones:eliminar
-    // Solo un ADMIN_GLOBAL puede eliminar organizaciones.
-    // Permiso requerido: organizaciones:eliminar
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
     public ResponseEntity<Void> deleteOrganizacion(@PathVariable Long organizacionId) {
         log.info("Solicitud para eliminar organización con ID: {}", organizacionId);
         organizacionService.deleteOrganizacion(organizacionId);
