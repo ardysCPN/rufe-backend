@@ -20,4 +20,5 @@ public class AyudasEntregadas {
     private String firmaDigital; // base64 or reference
     private String evidenciaFotoUrl; // URL from S3
     private LocalDateTime fechaEntrega;
+    private AyudaCatalogo ayudaCatalogo;
 }

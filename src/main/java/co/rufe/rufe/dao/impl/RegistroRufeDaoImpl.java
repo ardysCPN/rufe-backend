@@ -262,4 +262,12 @@ public class RegistroRufeDaoImpl implements IRegistroRufeDao {
         String sql = "UPDATE registros_rufe SET fecha_eliminacion = NOW() WHERE id = :id";
         namedParameterJdbcTemplate.update(sql, new MapSqlParameterSource("id", id));
     }
+
+    @Override
+    public int countIntegrantesByRegistroId(Long registroId) {
+        String sql = "SELECT COUNT(*) FROM integrantes_hogar WHERE registro_rufe_id = :id AND fecha_eliminacion IS NULL";
+        MapSqlParameterSource params = new MapSqlParameterSource("id", registroId);
+        Integer count = namedParameterJdbcTemplate.queryForObject(sql, params, Integer.class);
+        return count != null ? count : 0;
+    }
 }

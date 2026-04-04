@@ -22,4 +22,5 @@ public class RegistroRufeResponse {
     private String corregimiento;
     private String veredaSectorBarrio;
     private String direccion;
+    private Integer totalIntegrantes;
 }

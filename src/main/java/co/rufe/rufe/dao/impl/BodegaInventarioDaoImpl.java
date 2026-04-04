@@ -22,13 +22,25 @@ public class BodegaInventarioDaoImpl implements IBodegaInventarioDao {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final RowMapper<BodegaInventario> rowMapper = (rs, rowNum) -> BodegaInventario.builder()
+    private final RowMapper<BodegaInventario> rowMapper = (rs, rowNum) -> {
+        BodegaInventario bi = BodegaInventario.builder()
             .id(rs.getLong("id"))
             .organizacionId(rs.getLong("organizacion_id"))
             .ayudaCatalogoId(rs.getInt("ayuda_catalogo_id"))
             .cantidad(rs.getBigDecimal("cantidad"))
             .fechaActualizacion(rs.getTimestamp("fecha_actualizacion").toLocalDateTime())
             .build();
+        
+        // Populate nested AyudaCatalogo if present in result set
+        bi.setAyudaCatalogo(co.rufe.rufe.model.AyudaCatalogo.builder()
+            .id(rs.getInt("ayuda_catalogo_id"))
+            .nombre(rs.getString("nombre"))
+            .descripcion(rs.getString("descripcion"))
+            .unidadMedida(rs.getString("unidad_medida"))
+            .build());
+            
+        return bi;
+    };
 
     @Override
     public BodegaInventario save(BodegaInventario b) {
@@ -43,7 +55,7 @@ public class BodegaInventarioDaoImpl implements IBodegaInventarioDao {
                 ps.setBigDecimal(3, b.getCantidad());
                 return ps;
             }, keyHolder);
-            b.setId((Long) keyHolder.getKeys().get("id"));
+            b.setId(((Number) keyHolder.getKeys().get("id")).longValue());
             b.setFechaActualizacion(LocalDateTime.now());
         } else {
             updateStock(b.getOrganizacionId(), b.getAyudaCatalogoId(), b.getCantidad());
@@ -53,21 +65,24 @@ public class BodegaInventarioDaoImpl implements IBodegaInventarioDao {
 
     @Override
     public Optional<BodegaInventario> findById(Long id) {
-        String sql = "SELECT * FROM bodega_inventario WHERE id = ?";
+        String sql = "SELECT b.*, a.nombre, a.descripcion, a.unidad_medida FROM bodega_inventario b " +
+                     "JOIN ayuda_catalogo a ON b.ayuda_catalogo_id = a.id WHERE b.id = ?";
         List<BodegaInventario> results = jdbcTemplate.query(sql, rowMapper, id);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
     @Override
     public Optional<BodegaInventario> findByOrganizacionAndAyuda(Long organizacionId, Integer ayudaCatalogoId) {
-        String sql = "SELECT * FROM bodega_inventario WHERE organizacion_id = ? AND ayuda_catalogo_id = ?";
+        String sql = "SELECT b.*, a.nombre, a.descripcion, a.unidad_medida FROM bodega_inventario b " +
+                     "JOIN ayuda_catalogo a ON b.ayuda_catalogo_id = a.id WHERE b.organizacion_id = ? AND b.ayuda_catalogo_id = ?";
         List<BodegaInventario> results = jdbcTemplate.query(sql, rowMapper, organizacionId, ayudaCatalogoId);
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
     @Override
     public List<BodegaInventario> findAllByOrganizacion(Long organizacionId) {
-        String sql = "SELECT * FROM bodega_inventario WHERE organizacion_id = ? ORDER BY ayuda_catalogo_id ASC";
+        String sql = "SELECT b.*, a.nombre, a.descripcion, a.unidad_medida FROM bodega_inventario b " +
+                     "JOIN ayuda_catalogo a ON b.ayuda_catalogo_id = a.id WHERE b.organizacion_id = ? ORDER BY a.nombre ASC";
         return jdbcTemplate.query(sql, rowMapper, organizacionId);
     }
 

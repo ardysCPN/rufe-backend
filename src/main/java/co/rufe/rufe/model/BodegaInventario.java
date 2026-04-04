@@ -17,4 +17,5 @@ public class BodegaInventario {
     private Integer ayudaCatalogoId;
     private BigDecimal cantidad;
     private LocalDateTime fechaActualizacion;
+    private AyudaCatalogo ayudaCatalogo;
 }

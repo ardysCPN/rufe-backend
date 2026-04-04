@@ -155,6 +155,7 @@ public class RegistroRufeServiceImpl implements IRegistroRufeService {
                 .corregimiento(registro.getCorregimiento())
                 .veredaSectorBarrio(registro.getVeredaSectorBarrio())
                 .direccion(registro.getDireccion())
+                .totalIntegrantes(registroRufeDao.countIntegrantesByRegistroId(registro.getId()))
                 .estado("SINCRONIZADO")
                 .build();
     }

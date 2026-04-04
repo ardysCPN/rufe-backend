@@ -19,7 +19,8 @@ public class AyudasEntregadasDaoImpl implements IAyudasEntregadasDao {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final RowMapper<AyudasEntregadas> rowMapper = (rs, rowNum) -> AyudasEntregadas.builder()
+    private final RowMapper<AyudasEntregadas> rowMapper = (rs, rowNum) -> {
+        AyudasEntregadas ae = AyudasEntregadas.builder()
             .id(rs.getLong("id"))
             .organizacionId(rs.getLong("organizacion_id"))
             .registroRufeId(rs.getLong("registro_rufe_id"))
@@ -29,6 +30,16 @@ public class AyudasEntregadasDaoImpl implements IAyudasEntregadasDao {
             .evidenciaFotoUrl(rs.getString("evidencia_foto_url"))
             .fechaEntrega(rs.getTimestamp("fecha_entrega").toLocalDateTime())
             .build();
+            
+        ae.setAyudaCatalogo(co.rufe.rufe.model.AyudaCatalogo.builder()
+            .id(rs.getInt("ayuda_catalogo_id"))
+            .nombre(rs.getString("nombre"))
+            .descripcion(rs.getString("descripcion"))
+            .unidadMedida(rs.getString("unidad_medida"))
+            .build());
+            
+        return ae;
+    };
 
     @Override
     public AyudasEntregadas save(AyudasEntregadas a) {
@@ -45,17 +56,22 @@ public class AyudasEntregadasDaoImpl implements IAyudasEntregadasDao {
             ps.setString(6, a.getEvidenciaFotoUrl());
             return ps;
         }, keyHolder);
-        a.setId((Long) keyHolder.getKeys().get("id"));
+        
+        a.setId(((Number) keyHolder.getKeys().get("id")).longValue());
         return a;
     }
 
     @Override
     public List<AyudasEntregadas> findByOrganizacionId(Long organizacionId) {
-        return jdbcTemplate.query("SELECT * FROM ayudas_entregadas WHERE organizacion_id = ? ORDER BY fecha_entrega DESC", rowMapper, organizacionId);
+        String sql = "SELECT ae.*, a.nombre, a.descripcion, a.unidad_medida FROM ayudas_entregadas ae " +
+                     "JOIN ayuda_catalogo a ON ae.ayuda_catalogo_id = a.id WHERE ae.organizacion_id = ? ORDER BY ae.fecha_entrega DESC";
+        return jdbcTemplate.query(sql, rowMapper, organizacionId);
     }
 
     @Override
     public List<AyudasEntregadas> findByRegistroRufeId(Long registroRufeId) {
-        return jdbcTemplate.query("SELECT * FROM ayudas_entregadas WHERE registro_rufe_id = ? ORDER BY fecha_entrega DESC", rowMapper, registroRufeId);
+        String sql = "SELECT ae.*, a.nombre, a.descripcion, a.unidad_medida FROM ayudas_entregadas ae " +
+                     "JOIN ayuda_catalogo a ON ae.ayuda_catalogo_id = a.id WHERE ae.registro_rufe_id = ? ORDER BY ae.fecha_entrega DESC";
+        return jdbcTemplate.query(sql, rowMapper, registroRufeId);
     }
 }

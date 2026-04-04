@@ -36,4 +36,6 @@ public interface IRegistroRufeDao {
     void update(RegistroRufe registro);
 
     void deleteById(Long id);
+
+    int countIntegrantesByRegistroId(Long registroId);
 }
