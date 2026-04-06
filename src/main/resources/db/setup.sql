@@ -161,6 +161,7 @@ CREATE TABLE public.eventos (
 	fecha_creacion timestamp DEFAULT now() NOT NULL,
 	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
 	fecha_eliminacion timestamp NULL,
+	estado varchar(20) DEFAULT 'ABIERTO',
 	CONSTRAINT eventos_cliente_id_key UNIQUE (cliente_id),
 	CONSTRAINT eventos_pkey PRIMARY KEY (id),
 	CONSTRAINT eventos_organizacion_id_fkey FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
@@ -398,6 +399,7 @@ CREATE TABLE public.ayuda_catalogo (
 	nombre varchar(150) NOT NULL,
 	descripcion text NULL,
 	unidad_medida varchar(50) NOT NULL,
+	tipo_ayuda varchar(20) DEFAULT 'INDIVIDUAL',
 	CONSTRAINT ayuda_catalogo_pkey PRIMARY KEY (id)
 );
 
@@ -428,6 +430,25 @@ CREATE TABLE public.ayudas_entregadas (
 	CONSTRAINT fk_ayuda_entrega_rufe FOREIGN KEY (registro_rufe_id) REFERENCES public.registros_rufe(id),
 	CONSTRAINT fk_ayuda_entrega_cat FOREIGN KEY (ayuda_catalogo_id) REFERENCES public.ayuda_catalogo(id)
 );
+
+-- public.planificacion_entregas definition
+CREATE TABLE public.planificacion_entregas (
+	id bigserial NOT NULL,
+	organizacion_id int8 NOT NULL,
+	evento_id int8 NOT NULL,
+	registro_rufe_id int8 NOT NULL,
+	ayuda_catalogo_id int4 NOT NULL,
+	cantidad numeric(10,2) NOT NULL DEFAULT 1,
+	estado varchar(20) DEFAULT 'PENDIENTE',
+	fecha_creacion timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT planificacion_entregas_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_plan_organizacion FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE,
+	CONSTRAINT fk_plan_evento FOREIGN KEY (evento_id) REFERENCES public.eventos(id) ON DELETE CASCADE,
+	CONSTRAINT fk_plan_rufe FOREIGN KEY (registro_rufe_id) REFERENCES public.registros_rufe(id) ON DELETE CASCADE,
+	CONSTRAINT fk_plan_ayuda FOREIGN KEY (ayuda_catalogo_id) REFERENCES public.ayuda_catalogo(id)
+);
+CREATE INDEX idx_plan_evento_rufe ON public.planificacion_entregas (evento_id, registro_rufe_id);
+CREATE INDEX idx_plan_estado ON public.planificacion_entregas (estado);
 
 -- ==================== 2. Inserts ====================
 
@@ -501,8 +522,9 @@ INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, i
 (2, NULL, 1, '/rufe/list', 'Registros RUFE', 'description', 20, now()),
 (3, NULL, 1, NULL, 'Administración', 'admin_panel_settings', 100, now()),
 (4, NULL, 1, NULL, 'Herramientas', 'build', 110, now()),
-(5, NULL, 1, '/events/list', 'Eventos', 'event', 15, now()),
-(6, NULL, 1, '/reports/dashboard', 'Reportes', 'analytics', 30, now());
+(5, NULL, 1, NULL, 'Gestión de Emergencias', 'emergency', 15, now()),
+(6, NULL, 1, '/reports/dashboard', 'Reportes', 'analytics', 30, now()),
+(18, NULL, 1, '/bodega/dashboard', 'Gestor de Bodegas', 'inventory', 50, now());
 
 -- Submenus (linking to IDs above)
 INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES 
@@ -515,15 +537,16 @@ INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, i
 (13, 3, 2, '/admin/audit', 'Logs de Auditoría', 'history', 105, now()),
 (14, 4, 2, '/tools/sub', 'Herramientas sub', 'panel_settings', 111, now()),
 (15, 4, 2, '/tools/sync-status', 'Estado de Sincronización', 'sync', 112, now()),
-(16, 5, 2, '/events/new', 'Configurar Evento', 'event_available', 16, now()),
+(23, 5, 2, '/events/list', 'Tablero de Control', 'dashboard', 16, now()),
+(16, 5, 2, '/events/new', 'Configuración Inicial', 'settings_applications', 17, now()),
 (17, 6, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, now()),
-(18, NULL, 1, '/bodega/dashboard', 'Gestor de Bodegas', 'inventory', 50, now()),
 (19, 18, 2, '/bodega/inventario', 'Inventario Actual', 'inventory_2', 51, now()),
-(20, 18, 2, '/bodega/entregas', 'Ayudas Entregadas', 'local_shipping', 52, now()),
-(21, 18, 2, '/bodega/planificacion', 'Planificación de Entregas', 'assignment', 53, now());
+(20, 18, 2, '/bodega/entregas', 'Entrega de Ayudas', 'local_shipping', 52, now()),
+(21, 18, 2, '/bodega/planificacion', 'Planificación de Entregas', 'assignment', 53, now()),
+(22, 18, 2, '/bodega/entregas-masivas', 'Entregas Masivas', 'inventory', 54, now());
 
 -- Reset the sequence
-SELECT setval('menu_id_seq', 21);
+SELECT setval('menu_id_seq', 23);
 
 -- Master Data
 INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES 
@@ -540,6 +563,11 @@ INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES
 ('usuarios:leer', 'Permite ver la lista de usuarios y sus detalles', 'Usuarios'),
 ('usuarios:actualizar', 'Permite modificar usuarios existentes', 'Usuarios'),
 ('usuarios:eliminar', 'Permite eliminar usuarios', 'Usuarios'),
+('eventos:crear', 'Permite crear nuevos eventos reales o simulacros', 'Eventos'),
+('eventos:leer', 'Permite consultar el listado de eventos', 'Eventos'),
+('eventos:actualizar', 'Permite modificar datos de eventos existentes', 'Eventos'),
+('eventos:eliminar', 'Permite realizar eliminación lógica de eventos', 'Eventos'),
+('eventos:cerrar', 'Permite dar por finalizado un evento real', 'Eventos'),
 ('menu:crear', 'Permite crear nuevos ítems de menú', 'Menu'),
 ('menu:leer', 'Permite leer la estructura del menú', 'Menu'),
 ('menu:actualizar', 'Permite modificar ítems de menú existentes', 'Menu'),
@@ -548,7 +576,72 @@ INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES
 ('bodega:crear', 'Permite añadir inventario a la bodega', 'Bodega'),
 ('bodega:leer', 'Permite consultar el inventario y entregas', 'Bodega'),
 ('bodega:actualizar', 'Permite actualizar el inventario y despachar ayudas', 'Bodega'),
-('bodega:planear', 'Permite planificar distribuciones masivas de ayudas', 'Bodega');
+('bodega:planear', 'Permite planificar distribuciones masivas de ayudas', 'Bodega'),
+('bodega:entregar_masivo', 'Permite realizar entregas masivas basadas en la planificación', 'Bodega');
+
+
+INSERT INTO public.ayuda_catalogo (nombre, descripcion, unidad_medida, tipo_ayuda) VALUES
+
+-- 🥫 ALIMENTACIÓN
+('Mercado básico', 'Kit de alimentos no perecederos para una familia', 'KIT', 'INDIVIDUAL'),
+('Agua potable', 'Agua potable para consumo humano', 'LITROS', 'INDIVIDUAL'),
+('Suplemento nutricional', 'Alimentos de alto valor nutricional', 'UNIDAD', 'INDIVIDUAL'),
+('Alimento infantil', 'Alimentos especiales para niños', 'UNIDAD', 'INDIVIDUAL'),
+
+-- 🛏️ ALOJAMIENTO
+('Colchoneta', 'Colchoneta para descanso temporal', 'UNIDAD', 'INDIVIDUAL'),
+('Cobija', 'Cobija térmica', 'UNIDAD', 'INDIVIDUAL'),
+('Carpa', 'Carpa para alojamiento temporal', 'UNIDAD', 'COLECTIVA'),
+('Hamaca', 'Hamaca para descanso', 'UNIDAD', 'INDIVIDUAL'),
+
+-- 👕 VESTUARIO
+('Kit de ropa', 'Ropa básica para cambio', 'KIT', 'INDIVIDUAL'),
+('Zapatos', 'Calzado básico', 'PAR', 'INDIVIDUAL'),
+('Impermeable', 'Protección contra lluvia', 'UNIDAD', 'INDIVIDUAL'),
+
+-- 🧼 HIGIENE
+('Kit de aseo personal', 'Elementos básicos de higiene', 'KIT', 'INDIVIDUAL'),
+('Jabón antibacterial', 'Jabón para higiene personal', 'UNIDAD', 'INDIVIDUAL'),
+('Gel antibacterial', 'Gel desinfectante', 'UNIDAD', 'INDIVIDUAL'),
+('Papel higiénico', 'Papel higiénico para uso básico', 'ROLLO', 'INDIVIDUAL'),
+
+-- 🏥 SALUD
+('Botiquín de primeros auxilios', 'Kit básico de atención médica', 'KIT', 'COLECTIVA'),
+('Medicamentos básicos', 'Medicamentos esenciales', 'KIT', 'INDIVIDUAL'),
+('Tapabocas', 'Protección respiratoria', 'UNIDAD', 'INDIVIDUAL'),
+
+-- 🔥 INCENDIOS
+('Extintor', 'Equipo para control de incendios', 'UNIDAD', 'COLECTIVA'),
+('Mascarilla contra humo', 'Protección contra inhalación de humo', 'UNIDAD', 'INDIVIDUAL'),
+
+-- 🌊 INUNDACIONES / LLUVIAS
+('Kit de limpieza', 'Elementos para limpieza post-inundación', 'KIT', 'INDIVIDUAL'),
+('Bomba de agua', 'Equipo para extracción de agua', 'UNIDAD', 'COLECTIVA'),
+('Costales de arena', 'Barreras para contención de agua', 'UNIDAD', 'COLECTIVA'),
+
+-- 🌪️ VENDAVALES / TORMENTAS
+('Lona plástica', 'Cubierta para protección de viviendas', 'UNIDAD', 'INDIVIDUAL'),
+('Herramientas básicas', 'Kit de herramientas para reparación', 'KIT', 'COLECTIVA'),
+('Linterna', 'Iluminación portátil', 'UNIDAD', 'INDIVIDUAL'),
+
+-- 🌍 TERREMOTOS / DERRUMBES
+('Casco de seguridad', 'Protección para rescate', 'UNIDAD', 'COLECTIVA'),
+('Guantes de trabajo', 'Protección para manos', 'PAR', 'COLECTIVA'),
+('Kit de rescate', 'Herramientas para búsqueda y rescate', 'KIT', 'COLECTIVA'),
+
+-- 🐄 SEQUÍA / EVENTOS AGROPECUARIOS
+('Alimento para animales', 'Suplemento alimenticio para ganado', 'KG', 'COLECTIVA'),
+('Tanque de almacenamiento de agua', 'Depósito para agua', 'UNIDAD', 'COLECTIVA'),
+('Semillas', 'Semillas para reactivación agrícola', 'KG', 'COLECTIVA'),
+
+-- ❄️ GRANIZADAS / CLIMA
+('Plástico protector', 'Protección de cultivos', 'METRO', 'COLECTIVA'),
+
+-- ⚡ GENERAL EMERGENCIAS
+('Generador eléctrico', 'Fuente de energía portátil', 'UNIDAD', 'COLECTIVA'),
+('Cargador portátil', 'Batería externa para dispositivos', 'UNIDAD', 'INDIVIDUAL'),
+('Radio portátil', 'Comunicación en emergencias', 'UNIDAD', 'COLECTIVA'),
+('Kit de cocina', 'Utensilios básicos para preparar alimentos', 'KIT', 'INDIVIDUAL');
 
 INSERT INTO public.organizaciones (nombre_organizacion, nit, direccion, telefono, activa, fecha_creacion, fecha_actualizacion) VALUES ('GlobalCorp', '800.123.456-7', 'Calle Falsa 123', '3001234567', true, now(), now());
 INSERT INTO public.roles (organizacion_id, nombre_rol, descripcion, fecha_creacion) VALUES (1, 'ADMIN_GLOBAL', 'Administrador global del sistema con acceso a todas las organizaciones.', now());

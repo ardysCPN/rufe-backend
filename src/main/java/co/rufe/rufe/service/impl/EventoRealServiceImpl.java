@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -40,6 +39,7 @@ public class EventoRealServiceImpl implements IEventoRealService {
                 .departamento(request.getDepartamento())
                 .municipio(request.getMunicipio())
                 .descripcion(request.getDescripcion())
+                .estado(request.getEstado() != null ? request.getEstado() : "ABIERTO")
                 .build();
 
         EventoReal saved = eventoDao.save(evento);
@@ -49,10 +49,6 @@ public class EventoRealServiceImpl implements IEventoRealService {
     @Override
     @Transactional
     public EventoRealResponse updateEvento(Long id, EventoRealRequest request, Long organizacionId) {
-        // Simple bypass: if we want strict org ownership for updates even for admins,
-        // keep search as is.
-        // But usually Admin can update anything. Let's stick to org unless it's a list.
-        // Actually the prompt says "Admin can see everything".
         EventoReal existing = (organizacionId == null)
                 ? eventoDao.findById(id).orElseThrow(() -> new ResourceNotFoundException("Evento no encontrado."))
                 : eventoDao.findByIdAndOrganizacionId(id, organizacionId)
@@ -65,6 +61,7 @@ public class EventoRealServiceImpl implements IEventoRealService {
         existing.setDepartamento(request.getDepartamento());
         existing.setMunicipio(request.getMunicipio());
         existing.setDescripcion(request.getDescripcion());
+        existing.setEstado(request.getEstado());
 
         eventoDao.update(existing);
         return toResponse(existing);
@@ -91,7 +88,7 @@ public class EventoRealServiceImpl implements IEventoRealService {
     @Transactional
     public void deleteEvento(Long id, Long organizacionId) {
         if (eventoDao.findByIdAndOrganizacionId(id, organizacionId).isEmpty()) {
-            throw new ResourceNotFoundException("Evento no encontrado parea eliminar.");
+            throw new ResourceNotFoundException("Evento no encontrado para eliminar.");
         }
         eventoDao.deleteLogical(id, organizacionId);
     }
@@ -106,6 +103,7 @@ public class EventoRealServiceImpl implements IEventoRealService {
                 .departamento(evento.getDepartamento())
                 .municipio(evento.getMunicipio())
                 .descripcion(evento.getDescripcion())
+                .estado(evento.getEstado())
                 .fechaCreacion(evento.getFechaCreacion())
                 .fechaActualizacion(evento.getFechaActualizacion())
                 .build();

@@ -22,6 +22,7 @@ public class EventoReal {
     private String municipio;
     private String descripcion;
     private String zonaAfectacion; // WKT o GeoJSON representing Polygon
+    private String estado; // ABIERTO, CERRADO, EN_DISTRIBUCION
 
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;

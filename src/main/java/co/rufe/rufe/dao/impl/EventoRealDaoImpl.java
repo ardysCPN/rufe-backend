@@ -34,6 +34,7 @@ public class EventoRealDaoImpl implements IEventoRealDao {
             .departamento(rs.getString("departamento"))
             .municipio(rs.getString("municipio"))
             .descripcion(rs.getString("descripcion"))
+            .estado(rs.getString("estado"))
             .fechaCreacion(rs.getTimestamp("fecha_creacion").toLocalDateTime())
             .fechaActualizacion(rs.getTimestamp("fecha_actualizacion").toLocalDateTime())
             .build();
@@ -41,9 +42,9 @@ public class EventoRealDaoImpl implements IEventoRealDao {
     @Override
     public EventoReal save(EventoReal evento) {
         String sql = "INSERT INTO eventos (organizacion_id, cliente_id, nombre_evento, tipo_evento, " +
-                "fecha_evento, departamento, municipio, descripcion, fecha_creacion, fecha_actualizacion) " +
+                "fecha_evento, departamento, municipio, descripcion, estado, fecha_creacion, fecha_actualizacion) " +
                 "VALUES (:organizacionId, :clienteId, :nombreEvento, :tipoEvento, " +
-                ":fechaEvento, :departamento, :municipio, :descripcion, NOW(), NOW())";
+                ":fechaEvento, :departamento, :municipio, :descripcion, :estado, NOW(), NOW())";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         MapSqlParameterSource params = new MapSqlParameterSource();
@@ -55,6 +56,7 @@ public class EventoRealDaoImpl implements IEventoRealDao {
         params.addValue("departamento", evento.getDepartamento());
         params.addValue("municipio", evento.getMunicipio());
         params.addValue("descripcion", evento.getDescripcion());
+        params.addValue("estado", evento.getEstado() != null ? evento.getEstado() : "ABIERTO");
 
         namedParameterJdbcTemplate.update(sql, params, keyHolder, new String[] { "id" });
         evento.setId(Objects.requireNonNull(keyHolder.getKey()).longValue());
@@ -66,7 +68,7 @@ public class EventoRealDaoImpl implements IEventoRealDao {
     public void update(EventoReal evento) {
         String sql = "UPDATE eventos SET nombre_evento = :nombreEvento, tipo_evento = :tipoEvento, " +
                 "fecha_evento = :fechaEvento, departamento = :departamento, municipio = :municipio, " +
-                "descripcion = :descripcion, fecha_actualizacion = NOW() " +
+                "descripcion = :descripcion, estado = :estado, fecha_actualizacion = NOW() " +
                 "WHERE id = :id AND organizacion_id = :organizacionId AND fecha_eliminacion IS NULL";
 
         MapSqlParameterSource params = new MapSqlParameterSource();
@@ -78,6 +80,7 @@ public class EventoRealDaoImpl implements IEventoRealDao {
         params.addValue("departamento", evento.getDepartamento());
         params.addValue("municipio", evento.getMunicipio());
         params.addValue("descripcion", evento.getDescripcion());
+        params.addValue("estado", evento.getEstado());
 
         namedParameterJdbcTemplate.update(sql, params);
     }
