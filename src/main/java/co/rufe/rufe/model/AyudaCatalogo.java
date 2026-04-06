@@ -14,4 +14,5 @@ public class AyudaCatalogo {
     private String nombre;
     private String descripcion;
     private String unidadMedida;
+    private String tipoAyuda; // INDIVIDUAL, HOGAR
 }

@@ -20,6 +20,7 @@ public class EventoRealResponse {
     private String departamento;
     private String municipio;
     private String descripcion;
+    private String estado;
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
 }

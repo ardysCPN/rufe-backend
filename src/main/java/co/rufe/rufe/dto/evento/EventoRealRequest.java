@@ -32,4 +32,6 @@ public class EventoRealRequest {
     private String municipio;
 
     private String descripcion;
+
+    private String estado;
 }

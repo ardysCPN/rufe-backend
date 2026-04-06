@@ -23,6 +23,7 @@ public class AyudaCatalogoDaoImpl implements IAyudaCatalogoDao {
             .nombre(rs.getString("nombre"))
             .descripcion(rs.getString("descripcion"))
             .unidadMedida(rs.getString("unidad_medida"))
+            .tipoAyuda(rs.getString("tipo_ayuda"))
             .build();
 
     @Override
@@ -39,18 +40,19 @@ public class AyudaCatalogoDaoImpl implements IAyudaCatalogoDao {
     @Override
     public AyudaCatalogo save(AyudaCatalogo item) {
         if (item.getId() != null) {
-            jdbcTemplate.update("UPDATE ayuda_catalogo SET nombre = ?, descripcion = ?, unidad_medida = ? WHERE id = ?",
-                    item.getNombre(), item.getDescripcion(), item.getUnidadMedida(), item.getId());
+            jdbcTemplate.update("UPDATE ayuda_catalogo SET nombre = ?, descripcion = ?, unidad_medida = ?, tipo_ayuda = ? WHERE id = ?",
+                    item.getNombre(), item.getDescripcion(), item.getUnidadMedida(), item.getTipoAyuda(), item.getId());
             return item;
         } else {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(
-                        "INSERT INTO ayuda_catalogo (nombre, descripcion, unidad_medida) VALUES (?, ?, ?)",
+                        "INSERT INTO ayuda_catalogo (nombre, descripcion, unidad_medida, tipo_ayuda) VALUES (?, ?, ?, ?)",
                         new String[] { "id" });
                 ps.setString(1, item.getNombre());
                 ps.setString(2, item.getDescripcion());
                 ps.setString(3, item.getUnidadMedida());
+                ps.setString(4, item.getTipoAyuda() != null ? item.getTipoAyuda() : "INDIVIDUAL");
                 return ps;
             }, keyHolder);
             if (keyHolder.getKey() != null) {
