@@ -94,6 +94,16 @@ public class MenuServiceImpl implements IMenuService {
         }
     }
 
+    @Override
+    @Transactional
+    public void updateMenuStatus(Long id, Boolean offlineCompatible) {
+        co.rufe.rufe.model.Menu menu = menuDao.findById(id)
+                .orElseThrow(() -> new RuntimeException("Menú no encontrado con ID: " + id));
+        
+        menu.setOfflineCompatible(offlineCompatible);
+        menuDao.update(menu);
+    }
+
     private MenuDTO toDTO(Menu menu) {
         return MenuDTO.builder()
                 .id(menu.getId())
@@ -101,6 +111,7 @@ public class MenuServiceImpl implements IMenuService {
                 .ruta(menu.getRouterUrl())
                 .icono(menu.getIcono())
                 .orden(menu.getOrden())
+                .offlineCompatible(menu.getOfflineCompatible())
                 .build();
     }
 }

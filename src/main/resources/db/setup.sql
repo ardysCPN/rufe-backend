@@ -64,6 +64,7 @@ CREATE TABLE public.menu (
 	nombre_opcion varchar(150) NOT NULL,
 	icono varchar(100) NULL,
 	orden int4 NULL,
+	offline_compatible bool DEFAULT false NULL,
 	fecha_creacion timestamp DEFAULT now() NULL,
 	CONSTRAINT menu_pkey PRIMARY KEY (id)
 );
@@ -517,36 +518,37 @@ $$;
 -- ==================== 4. Security & Menus ====================
 
 -- Root Menus
-INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES 
-(1, NULL, 1, '/dashboard', 'Dashboard', 'dashboard', 10, now()),
-(2, NULL, 1, '/rufe/list', 'Registros RUFE', 'description', 20, now()),
-(3, NULL, 1, NULL, 'Administración', 'admin_panel_settings', 100, now()),
-(4, NULL, 1, NULL, 'Herramientas', 'build', 110, now()),
-(5, NULL, 1, NULL, 'Gestión de Emergencias', 'emergency', 15, now()),
-(6, NULL, 1, '/reports/dashboard', 'Reportes', 'analytics', 30, now()),
-(18, NULL, 1, '/bodega/dashboard', 'Gestor de Bodegas', 'inventory', 50, now());
+INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, offline_compatible, fecha_creacion) VALUES 
+(1, NULL, 1, '/dashboard', 'Dashboard', 'dashboard', 10, true, now()),
+(2, NULL, 1, '/rufe/list', 'Registros RUFE', 'description', 20, true, now()),
+(3, NULL, 1, NULL, 'Administración', 'admin_panel_settings', 100, false, now()),
+(4, NULL, 1, NULL, 'Herramientas', 'build', 110, true, now()),
+(5, NULL, 1, NULL, 'Gestión de Emergencias', 'emergency', 15, false, now()),
+(6, NULL, 1, '/reports/dashboard', 'Reportes', 'analytics', 30, false, now()),
+(18, NULL, 1, '/bodega/dashboard', 'Gestor de Bodegas', 'inventory', 50, true, now());
 
 -- Submenus (linking to IDs above)
-INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, fecha_creacion) VALUES 
-(7, 2, 2, '/rufe/new', 'Crear Nuevo Registro', 'add_circle', 21, now()),
-(8, 2, 2, '/rufe/list', 'Ver Todos los Registros', 'view_list', 22, now()),
-(9, 3, 2, '/admin/users', 'Gestión de Usuarios', 'group', 101, now()),
-(10, 3, 2, '/admin/roles', 'Gestión de Roles', 'manage_accounts', 102, now()),
-(11, 3, 2, '/admin/organizations', 'Organizaciones', 'corporate_fare', 103, now()),
-(12, 3, 2, '/admin/catalogs', 'Configuración de Catálogos', 'list_alt', 104, now()),
-(13, 3, 2, '/admin/audit', 'Logs de Auditoría', 'history', 105, now()),
-(14, 4, 2, '/tools/sub', 'Herramientas sub', 'panel_settings', 111, now()),
-(15, 4, 2, '/tools/sync-status', 'Estado de Sincronización', 'sync', 112, now()),
-(23, 5, 2, '/events/list', 'Tablero de Control', 'dashboard', 16, now()),
-(16, 5, 2, '/events/new', 'Configuración Inicial', 'settings_applications', 17, now()),
-(17, 6, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, now()),
-(19, 18, 2, '/bodega/inventario', 'Inventario Actual', 'inventory_2', 51, now()),
-(20, 18, 2, '/bodega/entregas', 'Entrega de Ayudas', 'local_shipping', 52, now()),
-(21, 18, 2, '/bodega/planificacion', 'Planificación de Entregas', 'assignment', 53, now()),
-(22, 18, 2, '/bodega/entregas-masivas', 'Entregas Masivas', 'inventory', 54, now());
+INSERT INTO public.menu (id, id_menu, id_tipo_menu, router_url, nombre_opcion, icono, orden, offline_compatible, fecha_creacion) VALUES 
+(7, 2, 2, '/rufe/new', 'Crear Nuevo Registro', 'add_circle', 21, true, now()),
+(8, 2, 2, '/rufe/list', 'Ver Todos los Registros', 'view_list', 22, true, now()),
+(9, 3, 2, '/admin/users', 'Gestión de Usuarios', 'group', 101, false, now()),
+(10, 3, 2, '/admin/roles', 'Gestión de Roles', 'manage_accounts', 102, false, now()),
+(11, 3, 2, '/admin/organizations', 'Organizaciones', 'corporate_fare', 103, false, now()),
+(12, 3, 2, '/admin/catalogs', 'Configuración de Catálogos', 'list_alt', 104, false, now()),
+(13, 3, 2, '/admin/audit', 'Logs de Auditoría', 'history', 105, false, now()),
+(24, 3, 2, '/admin/menu', 'Configuración de Menú', 'settings', 106, true, now()),
+(14, 4, 2, '/tools/sub', 'Herramientas sub', 'panel_settings', 111, true, now()),
+(15, 4, 2, '/tools/sync-status', 'Estado de Sincronización', 'sync', 112, true, now()),
+(23, 5, 2, '/events/list', 'Tablero de Control', 'dashboard', 16, false, now()),
+(16, 5, 2, '/events/new', 'Configuración Inicial', 'settings_applications', 17, false, now()),
+(17, 6, 2, '/reports/export', 'Exportar Datos (Excel/PDF)', 'file_download', 31, false, now()),
+(19, 18, 2, '/bodega/inventario', 'Inventario Actual', 'inventory_2', 51, true, now()),
+(20, 18, 2, '/bodega/entregas', 'Entrega de Ayudas', 'local_shipping', 52, false, now()),
+(21, 18, 2, '/bodega/planificacion', 'Planificación de Entregas', 'assignment', 53, false, now()),
+(22, 18, 2, '/bodega/entregas-masivas', 'Entregas Masivas', 'inventory', 54, false, now());
 
 -- Reset the sequence
-SELECT setval('menu_id_seq', 23);
+SELECT setval('menu_id_seq', 24);
 
 -- Master Data
 INSERT INTO public.permisos (nombre_permiso, descripcion, recurso) VALUES 

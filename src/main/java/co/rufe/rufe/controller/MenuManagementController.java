@@ -47,4 +47,12 @@ public class MenuManagementController {
         menuService.updateRoleMenus(rolId, menuIds);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/offline")
+    @PreAuthorize("@securityUtils.isGlobalAdmin()")
+    public ResponseEntity<Void> updateMenuOfflineStatus(@PathVariable Long id, @RequestParam Boolean offlineCompatible) {
+        log.info("Actualizando estado offline para menú ID: {} a {}", id, offlineCompatible);
+        menuService.updateMenuStatus(id, offlineCompatible);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -18,5 +18,6 @@ public class Menu {
     private String nombreOpcion;
     private String icono;
     private Integer orden;
+    private Boolean offlineCompatible;
     private LocalDateTime fechaCreacion;
 }

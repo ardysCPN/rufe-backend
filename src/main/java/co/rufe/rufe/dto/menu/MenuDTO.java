@@ -16,5 +16,6 @@ public class MenuDTO {
     private String ruta;
     private String icono;
     private Integer orden;
+    private Boolean offlineCompatible;
     private List<MenuDTO> children;
 }

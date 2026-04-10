@@ -26,6 +26,7 @@ public class MenuDaoImpl implements IMenuDao {
             .nombreOpcion(rs.getString("nombre_opcion"))
             .icono(rs.getString("icono"))
             .orden(rs.getInt("orden"))
+            .offlineCompatible(rs.getBoolean("offline_compatible"))
             .fechaCreacion(rs.getTimestamp("fecha_creacion").toLocalDateTime())
             .build();
 
@@ -44,5 +45,35 @@ public class MenuDaoImpl implements IMenuDao {
     public List<Menu> findAll() {
         String sql = "SELECT * FROM menu ORDER BY orden";
         return namedParameterJdbcTemplate.query(sql, menuRowMapper);
+    }
+
+    @Override
+    public java.util.Optional<Menu> findById(Long id) {
+        String sql = "SELECT * FROM menu WHERE id = :id";
+        MapSqlParameterSource params = new MapSqlParameterSource("id", id);
+        try {
+            return java.util.Optional.ofNullable(namedParameterJdbcTemplate.queryForObject(sql, params, menuRowMapper));
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return java.util.Optional.empty();
+        }
+    }
+
+    @Override
+    public void update(Menu menu) {
+        String sql = "UPDATE menu SET id_menu = :idMenu, id_tipo_menu = :idTipoMenu, router_url = :routerUrl, " +
+                     "nombre_opcion = :nombreOpcion, icono = :icono, orden = :orden, " +
+                     "offline_compatible = :offlineCompatible WHERE id = :id";
+        
+        MapSqlParameterSource params = new MapSqlParameterSource();
+        params.addValue("idMenu", menu.getIdMenu());
+        params.addValue("idTipoMenu", menu.getIdTipoMenu());
+        params.addValue("routerUrl", menu.getRouterUrl());
+        params.addValue("nombreOpcion", menu.getNombreOpcion());
+        params.addValue("icono", menu.getIcono());
+        params.addValue("orden", menu.getOrden());
+        params.addValue("offlineCompatible", menu.getOfflineCompatible());
+        params.addValue("id", menu.getId());
+
+        namedParameterJdbcTemplate.update(sql, params);
     }
 }

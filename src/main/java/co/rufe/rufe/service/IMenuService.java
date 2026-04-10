@@ -9,4 +9,6 @@ public interface IMenuService {
     List<MenuDTO> getAllMenus();
 
     void updateRoleMenus(Long rolId, List<Long> menuIds);
+    
+    void updateMenuStatus(Long id, Boolean offlineCompatible);
 }

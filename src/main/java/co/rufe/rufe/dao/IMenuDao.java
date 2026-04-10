@@ -7,4 +7,8 @@ public interface IMenuDao {
     List<Menu> findByRolId(Long rolId);
 
     List<Menu> findAll();
+    
+    java.util.Optional<Menu> findById(Long id);
+    
+    void update(Menu menu);
 }
