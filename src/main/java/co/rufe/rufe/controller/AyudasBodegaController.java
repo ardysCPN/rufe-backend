@@ -29,14 +29,16 @@ public class AyudasBodegaController {
     @GetMapping("/catalogo")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AyudaCatalogo>> getCatalogo() {
-        return ResponseEntity.ok(logisticaService.getCatalogoAyudas());
+        Long orgId = securityUtils.getCurrentUserOrganizationId();
+        return ResponseEntity.ok(logisticaService.getCatalogoAyudas(orgId));
     }
 
     @Operation(summary = "Agregar un nuevo tipo de ayuda al catálogo transversal", description = "Crea un nuevo ítem como 'Colchones', 'Mercados', etc.")
     @PostMapping("/catalogo")
     @PreAuthorize("@securityUtils.isGlobalAdmin()")
     public ResponseEntity<AyudaCatalogo> addCatalogoItem(@RequestBody AyudaCatalogo request) {
-        return ResponseEntity.ok(logisticaService.addCatalogoAyuda(request));
+        Long orgId = securityUtils.getCurrentUserOrganizationId();
+        return ResponseEntity.ok(logisticaService.addCatalogoAyuda(orgId, request));
     }
 
     @Operation(summary = "Ver inventario de bodega de mi organización", description = "Retorna el stock actual.")

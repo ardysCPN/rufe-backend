@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AyudaCatalogo {
     private Integer id;
+    private Long organizacionId;
     private String nombre;
     private String descripcion;
     private String unidadMedida;

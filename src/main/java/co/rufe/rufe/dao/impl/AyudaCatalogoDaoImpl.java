@@ -20,6 +20,7 @@ public class AyudaCatalogoDaoImpl implements IAyudaCatalogoDao {
 
     private final RowMapper<AyudaCatalogo> rowMapper = (rs, rowNum) -> AyudaCatalogo.builder()
             .id(rs.getInt("id"))
+            .organizacionId(rs.getObject("organizacion_id", Long.class))
             .nombre(rs.getString("nombre"))
             .descripcion(rs.getString("descripcion"))
             .unidadMedida(rs.getString("unidad_medida"))
@@ -27,8 +28,8 @@ public class AyudaCatalogoDaoImpl implements IAyudaCatalogoDao {
             .build();
 
     @Override
-    public List<AyudaCatalogo> findAll() {
-        return jdbcTemplate.query("SELECT * FROM ayuda_catalogo ORDER BY id ASC", rowMapper);
+    public List<AyudaCatalogo> findAllByOrganizacionId(Long organizacionId) {
+        return jdbcTemplate.query("SELECT * FROM ayuda_catalogo WHERE organizacion_id IS NULL OR organizacion_id = ? ORDER BY id ASC", rowMapper, organizacionId);
     }
 
     @Override
@@ -40,19 +41,26 @@ public class AyudaCatalogoDaoImpl implements IAyudaCatalogoDao {
     @Override
     public AyudaCatalogo save(AyudaCatalogo item) {
         if (item.getId() != null) {
-            jdbcTemplate.update("UPDATE ayuda_catalogo SET nombre = ?, descripcion = ?, unidad_medida = ?, tipo_ayuda = ? WHERE id = ?",
-                    item.getNombre(), item.getDescripcion(), item.getUnidadMedida(), item.getTipoAyuda(), item.getId());
+            jdbcTemplate.update("UPDATE ayuda_catalogo SET organizacion_id = ?, nombre = ?, descripcion = ?, unidad_medida = ?, tipo_ayuda = ? WHERE id = ?",
+                    item.getOrganizacionId(), item.getNombre(), item.getDescripcion(), item.getUnidadMedida(), item.getTipoAyuda(), item.getId());
             return item;
         } else {
             KeyHolder keyHolder = new GeneratedKeyHolder();
             jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(
-                        "INSERT INTO ayuda_catalogo (nombre, descripcion, unidad_medida, tipo_ayuda) VALUES (?, ?, ?, ?)",
+                        "INSERT INTO ayuda_catalogo (organizacion_id, nombre, descripcion, unidad_medida, tipo_ayuda) VALUES (?, ?, ?, ?, ?)",
                         new String[] { "id" });
-                ps.setString(1, item.getNombre());
-                ps.setString(2, item.getDescripcion());
-                ps.setString(3, item.getUnidadMedida());
-                ps.setString(4, item.getTipoAyuda() != null ? item.getTipoAyuda() : "INDIVIDUAL");
+                
+                if (item.getOrganizacionId() != null) {
+                    ps.setLong(1, item.getOrganizacionId());
+                } else {
+                    ps.setNull(1, java.sql.Types.BIGINT);
+                }
+                
+                ps.setString(2, item.getNombre());
+                ps.setString(3, item.getDescripcion());
+                ps.setString(4, item.getUnidadMedida());
+                ps.setString(5, item.getTipoAyuda() != null ? item.getTipoAyuda() : "INDIVIDUAL");
                 return ps;
             }, keyHolder);
             if (keyHolder.getKey() != null) {

@@ -65,10 +65,10 @@ public class RegistroRufeDaoImpl implements IRegistroRufeDao {
     public void saveIntegrante(IntegranteHogar integrante) {
         String sql = "INSERT INTO integrantes_hogar (registro_rufe_id, cliente_id, registro_rufe_cliente_id, " +
                 "nombres, apellidos, tipo_documento_id, numero_documento, fecha_nacimiento, " +
-                "parentesco_id, genero_id, pertenencia_etnica_id, telefono, fecha_creacion, fecha_actualizacion) " +
+                "parentesco_id, genero_id, pertenencia_etnica_id, telefono, estado_persona_id, es_fallecido, observacion_salud, fecha_creacion, fecha_actualizacion) " +
                 "VALUES (:registroRufeId, :clienteId, :registroRufeClienteId, " +
                 ":nombres, :apellidos, :tipoDocumentoId, :numeroDocumento, :fechaNacimiento, " +
-                ":parentescoId, :generoId, :pertenenciaEtnicaId, :telefono, NOW(), NOW())";
+                ":parentescoId, :generoId, :pertenenciaEtnicaId, :telefono, :estadoPersonaId, :esFallecido, :observacionSalud, NOW(), NOW())";
 
         MapSqlParameterSource params = new MapSqlParameterSource();
         params.addValue("registroRufeId", integrante.getRegistroRufeId());
@@ -83,6 +83,9 @@ public class RegistroRufeDaoImpl implements IRegistroRufeDao {
         params.addValue("generoId", integrante.getGeneroId());
         params.addValue("pertenenciaEtnicaId", integrante.getPertenenciaEtnicaId());
         params.addValue("telefono", integrante.getTelefono());
+        params.addValue("estadoPersonaId", integrante.getEstadoPersonaId() != null ? integrante.getEstadoPersonaId() : 1);
+        params.addValue("esFallecido", integrante.getEsFallecido() != null ? integrante.getEsFallecido() : false);
+        params.addValue("observacionSalud", integrante.getObservacionSalud());
 
         namedParameterJdbcTemplate.update(sql, params);
     }
@@ -209,14 +212,19 @@ public class RegistroRufeDaoImpl implements IRegistroRufeDao {
     public List<java.util.Map<String, Object>> obtenerDatosReporteExcel(Long organizacionId, boolean isAdmin) {
         String sql = "SELECT r.id AS \"ID Registro\", r.cliente_id AS \"Nro Radicado\", r.fecha_registro AS \"Fecha\", " +
                      "r.direccion AS \"Direccion\", r.corregimiento AS \"Corregimiento\", r.vereda_sector_barrio AS \"Barrio/Vereda\", " +
+                     "(SELECT COUNT(*) FROM integrantes_hogar i WHERE i.registro_rufe_id = r.id AND i.fecha_eliminacion IS NULL) AS \"Total Personas Censadas\", " +
+                     "(SELECT COUNT(*) FROM integrantes_hogar i WHERE i.registro_rufe_id = r.id AND (i.es_fallecido = true OR i.estado_persona_id = 4) AND i.fecha_eliminacion IS NULL) AS \"Personas Fallecidas\", " +
+                     "(SELECT COUNT(*) FROM integrantes_hogar i WHERE i.registro_rufe_id = r.id AND i.estado_persona_id IN (2,3) AND i.fecha_eliminacion IS NULL) AS \"Heridos\", " +
+                     "(SELECT COUNT(*) FROM integrantes_hogar i WHERE i.registro_rufe_id = r.id AND i.estado_persona_id = 5 AND i.fecha_eliminacion IS NULL) AS \"Desaparecidos\", " +
                      "u.nombre_completo AS \"Registrado Por\", " +
                      "o.nombre_organizacion AS \"Organizacion\" " +
                      "FROM registros_rufe r " +
                      "LEFT JOIN usuarios u ON r.usuario_registrador_id = u.id " +
-                     "LEFT JOIN organizaciones o ON r.organizacion_id = o.id ";
+                     "LEFT JOIN organizaciones o ON r.organizacion_id = o.id " +
+                     "WHERE r.fecha_eliminacion IS NULL ";
                      
         if (!isAdmin) {
-            sql += " WHERE r.organizacion_id = :organizacionId ORDER BY r.id DESC";
+            sql += " AND r.organizacion_id = :organizacionId ORDER BY r.id DESC";
             MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
             return namedParameterJdbcTemplate.queryForList(sql, params);
         } else {

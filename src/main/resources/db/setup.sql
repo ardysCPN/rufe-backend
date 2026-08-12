@@ -55,6 +55,14 @@ CREATE TABLE public.genero (
 	CONSTRAINT genero_pkey PRIMARY KEY (id)
 );
 
+-- public.estado_persona definition
+CREATE TABLE public.estado_persona (
+	id serial4 NOT NULL,
+	nombre varchar(50) NOT NULL,
+	CONSTRAINT estado_persona_nombre_key UNIQUE (nombre),
+	CONSTRAINT estado_persona_pkey PRIMARY KEY (id)
+);
+
 -- public.menu definition
 CREATE TABLE public.menu (
 	id bigserial NOT NULL,
@@ -365,11 +373,15 @@ CREATE TABLE public.integrantes_hogar (
 	genero_id int4 NULL,
 	pertenencia_etnica_id int4 NULL,
 	telefono varchar(20) NULL,
+	estado_persona_id int4 DEFAULT 1 NULL,
+	es_fallecido bool DEFAULT false NULL,
+	observacion_salud varchar(255) NULL,
 	fecha_creacion timestamp DEFAULT now() NOT NULL,
 	fecha_actualizacion timestamp DEFAULT now() NOT NULL,
 	fecha_eliminacion timestamp NULL,
 	CONSTRAINT integrantes_hogar_cliente_id_key UNIQUE (cliente_id),
 	CONSTRAINT integrantes_hogar_pkey PRIMARY KEY (id),
+	CONSTRAINT integrantes_hogar_estado_persona_id_fkey FOREIGN KEY (estado_persona_id) REFERENCES public.estado_persona(id),
 	CONSTRAINT integrantes_hogar_genero_id_fkey FOREIGN KEY (genero_id) REFERENCES public.genero(id),
 	CONSTRAINT integrantes_hogar_parentesco_id_fkey FOREIGN KEY (parentesco_id) REFERENCES public.parentesco(id),
 	CONSTRAINT integrantes_hogar_pertenencia_etnica_id_fkey FOREIGN KEY (pertenencia_etnica_id) REFERENCES public.pertenencia_etnica(id),
@@ -397,11 +409,13 @@ CREATE TABLE public.evidencias_rufe (
 -- public.ayuda_catalogo definition
 CREATE TABLE public.ayuda_catalogo (
 	id serial4 NOT NULL,
+	organizacion_id int8 NULL,
 	nombre varchar(150) NOT NULL,
 	descripcion text NULL,
 	unidad_medida varchar(50) NOT NULL,
 	tipo_ayuda varchar(20) DEFAULT 'INDIVIDUAL',
-	CONSTRAINT ayuda_catalogo_pkey PRIMARY KEY (id)
+	CONSTRAINT ayuda_catalogo_pkey PRIMARY KEY (id),
+	CONSTRAINT fk_ayuda_cat_org FOREIGN KEY (organizacion_id) REFERENCES public.organizaciones(id) ON DELETE CASCADE
 );
 
 -- public.bodega_inventario definition
@@ -462,6 +476,7 @@ INSERT INTO tipo_documento (nombre) VALUES ('Registro Civil'), ('Tarjeta de Iden
 INSERT INTO parentesco (nombre) VALUES ('Jefe(a) o cabeza del hogar'), ('Pareja, Esposo(a)'), ('Hijo(a), hijastro(a)'), ('Abuelo(a)'), ('Sobrino(a)'), ('Nieto(a)'), ('Tio(a)'), ('Otro pariente'), ('Padre, Madre, Suegro, Suegra'), ('Hermano(a), Hermanastro(a)'), ('Yerno, Nuera'), ('Cuñado, Cuñada'), ('Otro no pariente'), ('Primo(a)'), ('No informa');
 INSERT INTO genero (nombre) VALUES ('Masculino'), ('Femenino'), ('Transgénero');
 INSERT INTO pertenencia_etnica (nombre) VALUES ('Indígena'), ('Gitano - ROM'), ('Raizal'), ('Palenquero(a)'), ('Negro (a), mulato(a), afrodescendiente(a), afrocolombiano(a)'), ('No aplica');
+INSERT INTO estado_persona (id, nombre) VALUES (1, 'VIVO / SIN LESIONES'), (2, 'HERIDO LEVE'), (3, 'HERIDO GRAVE'), (4, 'FALLECIDO'), (5, 'DESAPARECIDO');
 
 INSERT INTO departamento (id, nombre) VALUES (5,'ANTIOQUIA'), (8,'ATLÁNTICO'), (11,'BOGOTÁ, D.C.'), (13,'BOLÍVAR'), (15,'BOYACÁ'), (17,'CALDAS'), (18,'CAQUETÁ'), (19,'CAUCA'), (20,'CESAR'), (23,'CÓRDOBA'), (25,'CUNDINAMARCA'), (27,'CHOCÓ'), (41,'HUILA'), (44,'LA GUAJIRA'), (47,'MAGDALENA'), (50,'META'), (52,'NARIÑO'), (54,'NORTE DE SANTANDER'), (63,'QUINDIO'), (66,'RISARALDA'), (68,'SANTANDER'), (70,'SUCRE'), (73,'TOLIMA'), (76,'VALLE DEL CAUCA'), (81,'ARAUCA'), (85,'CASANARE'), (86,'PUTUMAYO'), (88,'ARCHIPIÉLAGO DE SAN ANDRÉS, PROVIDENCIA Y SANTA CATALINA'), (91,'AMAZONAS'), (94,'GUAINÍA'), (95,'GUAVIARE'), (97,'VAUPÉS'), (99,'VICHADA');
 

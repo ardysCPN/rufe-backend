@@ -34,4 +34,7 @@ public class IntegranteHogarRequest {
     private Integer pertenenciaEtnicaId;
 
     private String telefono;
+    private Integer estadoPersonaId;
+    private Boolean esFallecido;
+    private String observacionSalud;
 }
