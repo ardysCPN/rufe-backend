@@ -30,6 +30,10 @@ public class IntegranteHogar {
 
     private String telefono;
 
+    private Integer estadoPersonaId;
+    private Boolean esFallecido;
+    private String observacionSalud;
+
     private LocalDateTime fechaCreacion;
     private LocalDateTime fechaActualizacion;
     private LocalDateTime fechaEliminacion;

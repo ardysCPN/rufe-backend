@@ -10,8 +10,8 @@ import java.util.List;
 public interface ILogisticaService {
 
     // Catalogo
-    List<AyudaCatalogo> getCatalogoAyudas();
-    AyudaCatalogo addCatalogoAyuda(AyudaCatalogo item);
+    List<AyudaCatalogo> getCatalogoAyudas(Long organizacionId);
+    AyudaCatalogo addCatalogoAyuda(Long organizacionId, AyudaCatalogo item);
 
     // Bodega
     BodegaInventario addStockBodega(Long organizacionId, Integer ayudaCatalogoId, BigDecimal cantidad);

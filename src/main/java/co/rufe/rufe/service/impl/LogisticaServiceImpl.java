@@ -27,14 +27,15 @@ public class LogisticaServiceImpl implements ILogisticaService {
     private final IAyudasEntregadasDao entregasDao;
 
     @Override
-    public List<AyudaCatalogo> getCatalogoAyudas() {
-        return catalogoDao.findAll();
+    public List<AyudaCatalogo> getCatalogoAyudas(Long organizacionId) {
+        return catalogoDao.findAllByOrganizacionId(organizacionId);
     }
 
     @Override
     @Transactional
-    public AyudaCatalogo addCatalogoAyuda(AyudaCatalogo item) {
+    public AyudaCatalogo addCatalogoAyuda(Long organizacionId, AyudaCatalogo item) {
         log.info("Agregando nuevo item al catálogo transversal de ayudas: {}", item.getNombre());
+        item.setOrganizacionId(organizacionId);
         return catalogoDao.save(item);
     }
 

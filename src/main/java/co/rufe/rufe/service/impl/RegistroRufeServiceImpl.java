@@ -74,6 +74,9 @@ public class RegistroRufeServiceImpl implements IRegistroRufeService {
                         .generoId(integranteReq.getGeneroId())
                         .pertenenciaEtnicaId(integranteReq.getPertenenciaEtnicaId())
                         .telefono(integranteReq.getTelefono())
+                        .estadoPersonaId(integranteReq.getEstadoPersonaId() != null ? integranteReq.getEstadoPersonaId() : 1)
+                        .esFallecido((integranteReq.getEstadoPersonaId() != null && integranteReq.getEstadoPersonaId() == 4) || Boolean.TRUE.equals(integranteReq.getEsFallecido()))
+                        .observacionSalud(integranteReq.getObservacionSalud())
                         .build();
 
                 registroRufeDao.saveIntegrante(integrante);
