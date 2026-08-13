@@ -31,9 +31,13 @@ public class UsuarioController {
         public ResponseEntity<UsuarioResponse> createUsuario(
                         @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails,
                         @Valid @RequestBody UsuarioRequest request) {
-                log.info("Solicitud para crear usuario '{}' en organización ID: {}", request.getEmail(),
-                                userDetails.getOrganizacionId());
-                UsuarioResponse response = usuarioService.createUsuario(userDetails.getOrganizacionId(), request);
+                boolean isGlobalAdmin = securityUtils.isGlobalAdmin();
+                Long targetOrgId = (isGlobalAdmin && request.getOrganizacionId() != null)
+                                ? request.getOrganizacionId()
+                                : userDetails.getOrganizacionId();
+                log.info("Solicitud para crear usuario '{}' en organización ID: {} (isGlobalAdmin={})", request.getEmail(),
+                                targetOrgId, isGlobalAdmin);
+                UsuarioResponse response = usuarioService.createUsuario(targetOrgId, request);
                 return new ResponseEntity<>(response, HttpStatus.CREATED);
         }
 
