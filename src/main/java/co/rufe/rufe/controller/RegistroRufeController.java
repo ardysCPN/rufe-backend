@@ -75,12 +75,11 @@ public class RegistroRufeController {
 
     @GetMapping("/pdf")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<byte[]> generarPdf() throws Exception {
-        // ... rest same ...
+    public ResponseEntity<byte[]> generarPdf(
+            @AuthenticationPrincipal CustomUserDetails userDetails) throws Exception {
 
-        // RegistroRufeCreateRequest dto = servicio.obtenerRufe();
-
-        byte[] pdf = reportService.generarReporteRufe(0L);
+        boolean isAdmin = securityUtils.isGlobalAdmin();
+        byte[] pdf = reportService.generarReporteRufe(userDetails.getOrganizacionId(), isAdmin);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=rufe.pdf")

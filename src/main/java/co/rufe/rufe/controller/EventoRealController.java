@@ -44,7 +44,10 @@ public class EventoRealController {
             @PathVariable Long id,
             @Valid @RequestBody EventoRealRequest request) {
         log.info("Actualizando evento ID: {} para org: {}", id, userDetails.getOrganizacionId());
-        EventoRealResponse response = eventoService.updateEvento(id, request, userDetails.getOrganizacionId());
+        boolean isAdmin = securityUtils.isGlobalAdmin();
+        // Si es ADMIN_GLOBAL, pasa null para permitir edición cross-org
+        Long orgId = isAdmin ? null : userDetails.getOrganizacionId();
+        EventoRealResponse response = eventoService.updateEvento(id, request, orgId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

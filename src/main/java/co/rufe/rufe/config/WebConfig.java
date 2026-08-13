@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${app.storage.local-dir:c:/rufe/evidences}")
+    @Value("${app.storage.local-dir:/app/uploads}")
     private String baseDir;
 
     @Override

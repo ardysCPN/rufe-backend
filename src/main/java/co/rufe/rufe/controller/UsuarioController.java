@@ -37,7 +37,7 @@ public class UsuarioController {
                                 : userDetails.getOrganizacionId();
                 log.info("Solicitud para crear usuario '{}' en organización ID: {} (isGlobalAdmin={})", request.getEmail(),
                                 targetOrgId, isGlobalAdmin);
-                UsuarioResponse response = usuarioService.createUsuario(targetOrgId, request);
+                UsuarioResponse response = usuarioService.createUsuario(targetOrgId, request, isGlobalAdmin);
                 return new ResponseEntity<>(response, HttpStatus.CREATED);
         }
 
