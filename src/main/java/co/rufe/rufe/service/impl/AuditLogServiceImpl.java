@@ -41,4 +41,10 @@ public class AuditLogServiceImpl implements IAuditLogService {
     public List<AuditLog> getLogsByOrganizacion(Long organizacionId) {
         return auditLogDao.findByOrganizacionId(organizacionId);
     }
+
+    @Override
+    public List<AuditLog> getAllLogs() {
+        return auditLogDao.findAll();
+    }
 }
+

@@ -6,7 +6,7 @@ import co.rufe.rufe.dto.usuario.UsuarioResponse;
 import java.util.List;
 
 public interface IUsuarioService {
-    UsuarioResponse createUsuario(Long organizacionId, UsuarioRequest request);
+    UsuarioResponse createUsuario(Long organizacionId, UsuarioRequest request, boolean isAdmin);
 
     UsuarioResponse getUsuarioById(Long id, Long organizacionId, boolean isAdmin);
 

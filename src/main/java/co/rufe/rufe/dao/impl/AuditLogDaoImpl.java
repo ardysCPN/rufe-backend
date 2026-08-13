@@ -42,4 +42,12 @@ public class AuditLogDaoImpl implements IAuditLogDao {
         MapSqlParameterSource params = new MapSqlParameterSource("organizacionId", organizacionId);
         return namedParameterJdbcTemplate.query(sql, params, CustomRowMappers.AUDIT_LOG_ROW_MAPPER);
     }
+
+    @Override
+    public List<AuditLog> findAll() {
+        String sql = "SELECT id, organizacion_id, usuario_id, accion, recurso, detalle, ip_address, fecha_creacion " +
+                "FROM audit_log ORDER BY fecha_creacion DESC";
+        return namedParameterJdbcTemplate.query(sql, new MapSqlParameterSource(), CustomRowMappers.AUDIT_LOG_ROW_MAPPER);
+    }
 }
+

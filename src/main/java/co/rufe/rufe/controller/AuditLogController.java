@@ -25,12 +25,22 @@ public class AuditLogController {
         this.securityUtils = securityUtils;
     }
 
+    /**
+     * Obtiene los logs de auditoría.
+     * ADMIN_GLOBAL: obtiene todos los logs de todas las organizaciones.
+     * Usuario normal con permiso: obtiene únicamente los logs de su organización.
+     */
     @GetMapping
-    @PreAuthorize("@securityUtils.isGlobalAdmin()")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<AuditLog>> getLogs(
             @AuthenticationPrincipal co.rufe.rufe.security.CustomUserDetails userDetails) {
-        log.info("Solicitud de auditoría para organización ID: {}", userDetails.getOrganizacionId());
-        List<AuditLog> logs = auditLogService.getLogsByOrganizacion(userDetails.getOrganizacionId());
-        return ResponseEntity.ok(logs);
+        boolean isAdmin = securityUtils.isGlobalAdmin();
+        if (isAdmin) {
+            log.info("ADMIN_GLOBAL solicitando todos los logs de auditoría.");
+            return ResponseEntity.ok(auditLogService.getAllLogs());
+        } else {
+            log.info("Solicitud de auditoría para organización ID: {}", userDetails.getOrganizacionId());
+            return ResponseEntity.ok(auditLogService.getLogsByOrganizacion(userDetails.getOrganizacionId()));
+        }
     }
 }

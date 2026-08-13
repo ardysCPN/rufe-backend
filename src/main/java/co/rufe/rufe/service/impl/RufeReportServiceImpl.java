@@ -25,13 +25,14 @@ public class RufeReportServiceImpl implements IRufeReportService {
     }
 
     @Override
-    public byte[] generarReporteRufe(Long eventoId) {
+    public byte[] generarReporteRufe(Long organizacionId, boolean isAdmin) {
         try {
             InputStream jrxmlStream = getClass().getResourceAsStream("/reports/rufe_report.jrxml");
             JasperReport jasperReport = JasperCompileManager.compileReport(jrxmlStream);
             Map<String, Object> parameters = new HashMap<>();
-            parameters.put("eventoId", eventoId);
-            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(java.util.Collections.emptyList());
+            parameters.put("organizacionId", organizacionId);
+            List<Map<String, Object>> datos = registroRufeDao.obtenerDatosReporteExcel(organizacionId, isAdmin);
+            JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(datos);
             JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             JasperExportManager.exportReportToPdfStream(jasperPrint, outputStream);

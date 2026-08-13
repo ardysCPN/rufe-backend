@@ -39,7 +39,7 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
     @Override
     @Transactional
-    public UsuarioResponse createUsuario(Long organizacionId, UsuarioRequest request) {
+    public UsuarioResponse createUsuario(Long organizacionId, UsuarioRequest request, boolean isAdmin) {
         log.info("Creando usuario '{}' para organización ID: {}", request.getEmail(), organizacionId);
 
         // 1. Validar que la organización exista
@@ -51,12 +51,16 @@ public class UsuarioServiceImpl implements IUsuarioService {
         if (!rolDao.existsById(request.getRolId())) {
             throw new ResourceNotFoundException("Rol no encontrado con ID: " + request.getRolId());
         }
-        rolDao.findById(request.getRolId()).ifPresent(rol -> {
-            if (!rol.getOrganizacionId().equals(organizacionId)) {
-                throw new IllegalArgumentException("El rol con ID " + request.getRolId()
-                        + " no pertenece a la organización con ID " + organizacionId + ".");
-            }
-        });
+        // El ADMIN_GLOBAL puede asignar cualquier rol (bypass de validación de org-rol).
+        // Un usuario normal solo puede asignar roles de su propia organización.
+        if (!isAdmin) {
+            rolDao.findById(request.getRolId()).ifPresent(rol -> {
+                if (!rol.getOrganizacionId().equals(organizacionId)) {
+                    throw new IllegalArgumentException("El rol con ID " + request.getRolId()
+                            + " no pertenece a la organización con ID " + organizacionId + ".");
+                }
+            });
+        }
 
         // 3. Validar que el email no exista dentro de la misma organización
         if (usuarioDao.existsByOrganizacionIdAndEmail(organizacionId, request.getEmail())) {
