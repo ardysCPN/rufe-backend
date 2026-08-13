@@ -30,6 +30,9 @@ public class UsuarioRequest {
     @Schema(description = "ID del rol asignado al usuario", example = "101")
     private Long rolId;
 
+    @Schema(description = "ID de la organización asignada al usuario (opcional para SuperAdmin)", example = "1")
+    private Long organizacionId;
+
     @Schema(description = "Estado de actividad del usuario", example = "true")
     private Boolean activo; // Opcional, si no se envía, el DAO puede usar el default de la BD
 }
