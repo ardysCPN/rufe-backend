@@ -9,8 +9,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${app.storage.local-dir:/app/uploads}")
-    private String baseDir;
+    @Value("${app.storage.local-dir:}")
+    private String configuredBaseDir;
+
+    private String getBaseDir() {
+        if (configuredBaseDir != null && !configuredBaseDir.isBlank()) {
+            return configuredBaseDir;
+        }
+        boolean isWindows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        return isWindows ? "c:/rufe/evidences" : "/app/uploads";
+    }
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -23,7 +31,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        String baseDir = getBaseDir().replace("\\", "/");
+        if (!baseDir.endsWith("/")) {
+            baseDir += "/";
+        }
         registry.addResourceHandler("/api/public/evidencias/**")
-                .addResourceLocations("file:" + baseDir + "/");
+                .addResourceLocations("file:" + baseDir);
     }
 }
+

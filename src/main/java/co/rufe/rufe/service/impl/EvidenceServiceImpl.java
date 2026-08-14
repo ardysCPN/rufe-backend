@@ -18,8 +18,16 @@ import java.util.UUID;
 @Service
 public class EvidenceServiceImpl implements IEvidenceService {
 
-    @Value("${app.storage.local-dir:c:/rufe/evidences}") // Folder of storage
-    private String baseDir;
+    @Value("${app.storage.local-dir:}")
+    private String configuredBaseDir;
+
+    private String getBaseDir() {
+        if (configuredBaseDir != null && !configuredBaseDir.isBlank()) {
+            return configuredBaseDir;
+        }
+        boolean isWindows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        return isWindows ? "c:/rufe/evidences" : "/app/uploads";
+    }
 
     @Override
     public String uploadEvidence(MultipartFile file, String subFolder) throws IOException {
@@ -28,30 +36,44 @@ public class EvidenceServiceImpl implements IEvidenceService {
         
         if (originalFilename != null && originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        } else {
+            String ct = file.getContentType();
+            if (ct != null) {
+                if (ct.contains("png")) {
+                    extension = ".png";
+                } else if (ct.contains("webp")) {
+                    extension = ".webp";
+                } else {
+                    extension = ".jpg";
+                }
+            } else {
+                extension = ".jpg";
+            }
         }
         
         String newFilename = UUID.randomUUID().toString() + extension;
-        Path targetLocation = Paths.get(baseDir).resolve(subFolder).normalize();
+        Path targetLocation = Paths.get(getBaseDir()).resolve(subFolder != null ? subFolder : "censos").normalize();
         
-        if(!Files.exists(targetLocation)) {
+        if (!Files.exists(targetLocation)) {
             Files.createDirectories(targetLocation);
         }
         Path targetFile = targetLocation.resolve(newFilename);
         
         Files.copy(file.getInputStream(), targetFile, StandardCopyOption.REPLACE_EXISTING);
-        log.info("Archivo local guardado en: {}", targetFile.toAbsolutePath());
+        log.info("Archivo local guardado exitosamente en: {}", targetFile.toAbsolutePath());
         
         return newFilename;
     }
 
     @Override
     public String getEvidenceUrl(String subFolder, String filename) {
-        // Retorna la URL pública a la que Angular accederá para descargar/ver la imagen
+        String folder = (subFolder != null && !subFolder.isBlank()) ? subFolder : "censos";
         return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/api/public/evidencias/")
-                .path(subFolder)
+                .path(folder)
                 .path("/")
                 .path(filename)
                 .toUriString();
     }
 }
+
