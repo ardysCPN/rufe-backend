@@ -29,6 +29,9 @@ public class AyudaCatalogoDaoImpl implements IAyudaCatalogoDao {
 
     @Override
     public List<AyudaCatalogo> findAllByOrganizacionId(Long organizacionId) {
+        if (organizacionId == null) {
+            return jdbcTemplate.query("SELECT * FROM ayuda_catalogo ORDER BY id ASC", rowMapper);
+        }
         return jdbcTemplate.query("SELECT * FROM ayuda_catalogo WHERE organizacion_id IS NULL OR organizacion_id = ? ORDER BY id ASC", rowMapper, organizacionId);
     }
 
